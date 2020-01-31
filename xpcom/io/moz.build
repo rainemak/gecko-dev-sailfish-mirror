@@ -153,3 +153,5 @@ LOCAL_INCLUDES += [
     "!..",
     "../build",
 ]
+
+CXXFLAGS += CONFIG['TK_CFLAGS']
