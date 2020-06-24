@@ -553,6 +553,11 @@ void PDMFactory::CreateContentPDMs() {
 }
 
 void PDMFactory::CreateDefaultPDMs() {
+  if (StaticPrefs::media_gmp_decoder_enabled() &&
+      !CreateAndStartupPDM<GMPDecoderModule>()) {
+    mFailureFlags += DecoderDoctorDiagnostics::Flags::GMPPDMFailedToStartup;
+  }
+
 #ifdef XP_WIN
   if (StaticPrefs::media_wmf_enabled() && !IsWin7AndPre2000Compatible()) {
     if (!CreateAndStartupPDM<WMFDecoderModule>()) {
@@ -591,11 +596,6 @@ void PDMFactory::CreateDefaultPDMs() {
 #endif
 
   CreateAndStartupPDM<AgnosticDecoderModule>();
-
-  if (StaticPrefs::media_gmp_decoder_enabled() &&
-      !CreateAndStartupPDM<GMPDecoderModule>()) {
-    mFailureFlags += DecoderDoctorDiagnostics::Flags::GMPPDMFailedToStartup;
-  }
 }
 
 void PDMFactory::CreateNullPDM() {
