@@ -17,6 +17,11 @@
 #include "gfxPlatform.h"
 #include "VsyncSource.h"
 
+#if defined(MOZ_EMBEDLITE)
+#include "mozilla/embedlite/nsWindow.h"
+#include "mozilla/embedlite/EmbedLiteCompositorBridgeParent.h"
+#endif
+
 namespace mozilla {
 namespace layers {
 
@@ -107,9 +112,16 @@ CompositorManagerParent::CreateSameProcessWidgetCompositorBridge(
                                ->GetGlobalDisplay()
                                .GetVsyncRate();
 
+#ifdef MOZ_EMBEDLITE
+  // auto window = static_cast<mozilla::embedlite::nsWindow *>(aWidget->RealWidget());
+  RefPtr<CompositorBridgeParent> bridge =
+          new mozilla::embedlite::EmbedLiteCompositorBridgeParent(1, sInstance, aScale, vsyncRate, aOptions,
+                                                                  aUseExternalSurfaceSize, aSurfaceSize);
+#else
   RefPtr<CompositorBridgeParent> bridge =
       new CompositorBridgeParent(sInstance, aScale, vsyncRate, aOptions,
                                  aUseExternalSurfaceSize, aSurfaceSize);
+#endif
 
   sInstance->mPendingCompositorBridges.AppendElement(bridge);
   return bridge.forget();
