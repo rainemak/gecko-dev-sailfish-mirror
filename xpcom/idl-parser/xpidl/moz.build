@@ -9,3 +9,18 @@ PYTHON_UNITTEST_MANIFESTS += [
 ]
 
 GeneratedFile("xpidl.stub", script="header.py", entry_point="main")
+
+SDK_FILES.bin += [
+#    "!xpidllex.py",
+#    "!xpidlyacc.py",
+    "header.py",
+    "jsonxpt.py",
+    "xpidl.py",
+]
+
+# SDK_FILES.bin.ply += [
+#     "/other-licenses/ply/ply/__init__.py",
+#     "/other-licenses/ply/ply/lex.py",
+#     "/other-licenses/ply/ply/yacc.py",
+# ]
+

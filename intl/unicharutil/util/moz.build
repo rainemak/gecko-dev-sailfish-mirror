@@ -31,4 +31,7 @@ GeneratedFile(
     inputs=["../../icu/source/data/translit/Latin_ASCII.txt"],
 )
 
-FINAL_LIBRARY = "xul"
+SDK_LIBRARY = True
+
+FINAL_LIBRARY = 'xul'
+
