@@ -118,6 +118,8 @@ endif
 # and Mac requires some extra care due to cross-compilation.
 MOZ_PACKAGER_MINIFY=1
 
+INSTALL_SDK = 1
+
 include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
 
 ifeq (bundle, $(MOZ_FS_LAYOUT))

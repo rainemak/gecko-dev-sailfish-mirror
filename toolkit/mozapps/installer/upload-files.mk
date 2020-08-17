@@ -46,6 +46,14 @@ endif
 PACKAGE_BASE_DIR = $(ABS_DIST)
 PACKAGE       = $(PKG_PATH)$(PKG_BASENAME)$(PKG_SUFFIX)
 
+# By default, the SDK uses the same packaging type as the main bundle,
+# but on mac it is a .tar.bz2
+SDK_SUFFIX    = $(PKG_SUFFIX)
+SDK           = $(SDK_PATH)$(PKG_BASENAME).sdk$(SDK_SUFFIX)
+ifdef UNIVERSAL_BINARY
+SDK           = $(SDK_PATH)$(PKG_BASENAME)-$(TARGET_CPU).sdk$(SDK_SUFFIX)
+endif
+
 # JavaScript Shell packaging
 JSSHELL_BINS  = \
   js$(BIN_SUFFIX) \
@@ -114,12 +122,14 @@ ifeq ($(MOZ_PKG_FORMAT),TAR)
   PKG_SUFFIX	= .tar
   INNER_MAKE_PACKAGE 	= $(CREATE_FINAL_TAR) - $(MOZ_PKG_DIR) > $(PACKAGE)
   INNER_UNMAKE_PACKAGE	= $(UNPACK_TAR) < $(UNPACKAGE)
+  MAKE_SDK = $(CREATE_FINAL_TAR) - $(MOZ_APP_NAME)-sdk > '$(SDK)'
 endif
 
 ifeq ($(MOZ_PKG_FORMAT),TGZ)
   PKG_SUFFIX	= .tar.gz
   INNER_MAKE_PACKAGE 	= $(CREATE_FINAL_TAR) - $(MOZ_PKG_DIR) | gzip -vf9 > $(PACKAGE)
   INNER_UNMAKE_PACKAGE	= gunzip -c $(UNPACKAGE) | $(UNPACK_TAR)
+  MAKE_SDK = $(CREATE_FINAL_TAR) - $(MOZ_APP_NAME)-sdk | gzip -vf9 > '$(SDK)'
 endif
 
 ifeq ($(MOZ_PKG_FORMAT),BZ2)
@@ -130,12 +140,14 @@ ifeq ($(MOZ_PKG_FORMAT),BZ2)
     INNER_MAKE_PACKAGE 	= $(CREATE_FINAL_TAR) - $(MOZ_PKG_DIR) | bzip2 -vf > $(PACKAGE)
   endif
   INNER_UNMAKE_PACKAGE	= bunzip2 -c $(UNPACKAGE) | $(UNPACK_TAR)
+  MAKE_SDK = $(CREATE_FINAL_TAR) - $(MOZ_APP_NAME)-sdk | bzip2 -vf > '$(SDK)'
 endif
 
 ifeq ($(MOZ_PKG_FORMAT),ZIP)
   PKG_SUFFIX	= .zip
   INNER_MAKE_PACKAGE = $(call py_action,make_zip,'$(MOZ_PKG_DIR)' '$(PACKAGE)')
   INNER_UNMAKE_PACKAGE = $(call py_action,make_unzip,$(UNPACKAGE))
+  MAKE_SDK = $(call py_action,zip,'$(SDK)' $(MOZ_APP_NAME)-sdk)
 endif
 
 ifeq ($(MOZ_PKG_FORMAT),SFX7Z)
@@ -200,7 +212,15 @@ ifeq ($(MOZ_PKG_FORMAT),RPM)
       --define '_testsinstalldir $(shell basename $(installdir))'
   endif
 
-  #For each of the main/tests rpms we want to make sure that
+  ifdef INSTALL_SDK
+    RPM_CMD += \
+      --define 'createdevel yes' \
+      --define '_idldir $(idldir)' \
+      --define '_sdkdir $(sdkdir)' \
+      --define '_includedir $(includedir)'
+  endif
+
+  #For each of the main, tests, sdk rpms we want to make sure that
   #if they exist that they are in objdir/dist/ and that they get
   #uploaded and that they are beside the other build artifacts
   MAIN_RPM= $(MOZ_APP_NAME)-$(MOZ_NUMERIC_APP_VERSION)-$(MOZ_RPM_RELEASE).$(BUILDID).$(TARGET_CPU)$(PKG_SUFFIX)
@@ -211,6 +231,12 @@ ifeq ($(MOZ_PKG_FORMAT),RPM)
     TESTS_RPM=$(MOZ_APP_NAME)-tests-$(MOZ_NUMERIC_APP_VERSION)-$(MOZ_RPM_RELEASE).$(BUILDID).$(TARGET_CPU)$(PKG_SUFFIX)
     UPLOAD_EXTRA_FILES += $(TESTS_RPM)
     RPM_CMD += && mv $(TARGET_CPU)/$(TESTS_RPM) $(ABS_DIST)/
+  endif
+
+  ifdef INSTALL_SDK
+    SDK_RPM=$(MOZ_APP_NAME)-devel-$(MOZ_NUMERIC_APP_VERSION)-$(MOZ_RPM_RELEASE).$(BUILDID).$(TARGET_CPU)$(PKG_SUFFIX)
+    UPLOAD_EXTRA_FILES += $(SDK_RPM)
+    RPM_CMD += && mv $(TARGET_CPU)/$(SDK_RPM) $(ABS_DIST)/
   endif
 
   INNER_MAKE_PACKAGE = $(RPM_CMD)
@@ -245,9 +271,17 @@ ifeq ($(MOZ_PKG_FORMAT),DMG)
         $(if $(MOZ_PKG_MAC_ICON),--icon '$(MOZ_PKG_MAC_ICON)') \
         $(UNPACKAGE) $(MOZ_PKG_DIR) \
         )
+  # The plst and blkx resources are skipped because they belong to each
+  # individual dmg and are created by hdiutil.
+  SDK_SUFFIX = .tar.bz2
+  MAKE_SDK = $(CREATE_FINAL_TAR) - $(MOZ_APP_NAME)-sdk | bzip2 -vf > '$(SDK)'
 endif
 
 MAKE_PACKAGE = $(INNER_MAKE_PACKAGE)
+
+ifdef MOZ_SIGN_CMD
+  MAKE_SDK           += && $(MOZ_SIGN_CMD) -f gpg '$(SDK)'
+endif
 
 NO_PKG_FILES += \
 	core \
@@ -372,6 +406,8 @@ UPLOAD_FILES= \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MOZHARNESS_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(GENERATED_SOURCE_FILE_PACKAGE)) \
+  $(call QUOTED_WILDCARD,$(DIST)/$(SDK)) \
+  $(call QUOTED_WILDCARD,$(DIST)/$(SDK).asc) \
   $(call QUOTED_WILDCARD,$(MOZ_SOURCESTAMP_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_BUILDINFO_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_BUILDHUB_JSON)) \
@@ -411,6 +447,13 @@ ifdef ENABLE_MOZSEARCH_PLUGIN
   UPLOAD_FILES += $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MOZSEARCH_RUST_ANALYSIS_BASENAME).zip)
   UPLOAD_FILES += $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MOZSEARCH_RUST_STDLIB_BASENAME).zip)
   UPLOAD_FILES += $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MOZSEARCH_INCLUDEMAP_BASENAME).map)
+endif
+
+ifdef UNIFY_DIST
+  UNIFY_ARCH := $(notdir $(patsubst %/,%,$(dir $(UNIFY_DIST))))
+  UPLOAD_FILES += \
+    $(call QUOTED_WILDCARD,$(UNIFY_DIST)/$(SDK_PATH)$(PKG_BASENAME)-$(UNIFY_ARCH).sdk$(SDK_SUFFIX)) \
+    $(call QUOTED_WILDCARD,$(UNIFY_DIST)/$(SDK_PATH)$(PKG_BASENAME)-$(UNIFY_ARCH).sdk$(SDK_SUFFIX).asc)
 endif
 
 ifeq (Darwin, $(OS_ARCH))
