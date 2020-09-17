@@ -2086,6 +2086,17 @@ nsLocalFile::Launch() {
   }
 
   return giovfs->ShowURIForInput(mPath);
+#elif defined(MOZ_ENABLE_CONTENTACTION)
+  QUrl uri = QUrl::fromLocalFile(QString::fromUtf8(mPath.get()));
+  ContentAction::Action action =
+    ContentAction::Action::defaultActionForFile(uri);
+
+  if (action.isValid()) {
+    action.trigger();
+    return NS_OK;
+  }
+
+  return NS_ERROR_FAILURE;
 #elif defined(MOZ_WIDGET_ANDROID)
   // Not supported on GeckoView
   return NS_ERROR_NOT_IMPLEMENTED;
