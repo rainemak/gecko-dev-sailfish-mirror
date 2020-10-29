@@ -35,6 +35,10 @@
 #include "nsPrintfCString.h"
 #include "nsServiceManagerUtils.h"
 #include "nsTArray.h"
+#include "nsThreadUtils.h"
+#include "mozilla/Services.h"
+#include "nsIObserverService.h"
+#include "nsString.h"
 #include <algorithm>
 #include <limits>
 
@@ -72,6 +76,14 @@ static const char* ToPlayStateStr(MediaDecoder::PlayState aState) {
       MOZ_ASSERT_UNREACHABLE("Invalid playState.");
   }
   return "UNKNOWN";
+}
+
+static void SendMediaDecoderInfo(const nsString& aData) {
+  MOZ_ASSERT(NS_IsMainThread());
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->NotifyObservers(nullptr, "media-decoder-info", aData.get());
+  }
 }
 
 class MediaMemoryTracker : public nsIMemoryReporter {
@@ -664,6 +676,11 @@ void MediaDecoder::MetadataLoaded(
       aInfo->mAudio.mChannels, aInfo->mAudio.mRate, aInfo->HasAudio(),
       aInfo->HasVideo());
 
+  nsString data;
+  data.AppendPrintf("{ \"owner\" : \"%p\", \"state\": \"meta\", \"a\" : %i, \"v\" : %i }",
+                    this, aInfo->HasAudio(), aInfo->HasVideo());
+  SendMediaDecoderInfo(data);
+
   mMediaSeekable = aInfo->mMediaSeekable;
   mMediaSeekableOnlyInBufferedRanges =
       aInfo->mMediaSeekableOnlyInBufferedRanges;
@@ -842,6 +859,16 @@ void MediaDecoder::SeekingStarted() {
 void MediaDecoder::ChangeState(PlayState aState) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!IsShutdown(), "SHUTDOWN is the final state.");
+
+  if (mPlayState != aState) {
+    nsString data;
+    if (aState == PLAY_STATE_PLAYING) {
+      data.AppendPrintf("{ \"owner\" : \"%p\", \"state\": \"play\" }", this);
+    } else {
+      data.AppendPrintf("{ \"owner\" : \"%p\", \"state\": \"pause\" }", this);
+    }
+    SendMediaDecoderInfo(data);
+  }
 
   if (mNextState == aState) {
     mNextState = PLAY_STATE_PAUSED;
