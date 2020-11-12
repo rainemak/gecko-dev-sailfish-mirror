@@ -40,6 +40,9 @@ class GMPVideoDecoder : public MediaDataDecoder,
   nsCString GetDescriptionName() const override {
     return "gmp video decoder"_ns;
   }
+  bool SupportDecoderRecycling() const override {
+      return mGMP->GetDisplayName().EqualsLiteral("gmp-droid");
+  }
   ConversionRequired NeedsConversion() const override {
     return mConvertToAnnexB ? ConversionRequired::kNeedAnnexB
                             : ConversionRequired::kNeedAVCC;
