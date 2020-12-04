@@ -1782,7 +1782,7 @@ impl<B: GfxBackend> Device<B> {
                 .allocate(&self.raw, &layout.raw, &layout.desc_count, 1)?;
         desc_set = desc_sets.pop().unwrap();
 
-        println!("cargo:gfx:wgpu:wgpu-core:src:device:mod.rs");
+        println!("cargo:gfx:wgpu:wgpu-core:src:device:mod.rs end");
 
         Ok(binding_model::BindGroup {
             raw: desc_set,

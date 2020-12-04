@@ -4030,7 +4030,7 @@
 # Make gecko compositor use GL context/surface provided by the application
 -   name: embedlite.compositor.external_gl_context
     type: bool
-    value: true
+    value: false
     mirror: always
 
 # Request the application to create GLContext for the compositor as
@@ -4038,7 +4038,7 @@
 # this pref only makes sense when using an external compositor gl context
 -   name: embedlite.compositor.request_external_gl_context_early
     type: bool
-    value: true
+    value: false
     mirror: always
 
 #endif
