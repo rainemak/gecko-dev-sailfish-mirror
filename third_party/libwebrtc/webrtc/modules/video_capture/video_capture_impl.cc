@@ -281,5 +281,17 @@ uint32_t VideoCaptureImpl::CalculateFrameRate(int64_t now_ns) {
 
   return nrOfFrames;
 }
+
+int32_t VideoCaptureImpl::IncomingVideoBuffer(const rtc::scoped_refptr<VideoFrameBuffer>& buffer, uint64_t captureTime)
+{
+    rtc::CritScope cs(&_apiCs);
+    VideoFrame captureFrame(
+          buffer, 0, rtc::TimeMillis(),
+          !apply_rotation_ ? _rotateFrame : kVideoRotation_0);
+    captureFrame.set_ntp_time_ms(captureTime);
+    captureFrame.set_rotation(_rotateFrame);
+    DeliverCapturedFrame(captureFrame);
+    return 0;
+}
 }  // namespace videocapturemodule
 }  // namespace webrtc

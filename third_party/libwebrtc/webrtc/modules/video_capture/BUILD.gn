@@ -98,16 +98,26 @@ if (!build_with_chromium) {
 
     if (is_linux || is_bsd) {
       sources = [
-        "linux/device_info_linux.cc",
-        "linux/device_info_linux.h",
-        "linux/video_capture_linux.cc",
-        "linux/video_capture_linux.h",
+        "sfos/device_info_sfos.cc",
+        "sfos/device_info_sfos.h",
+        "sfos/video_capture_sfos.cc",
+        "sfos/video_capture_sfos.h",
       ]
       deps += [
         "../..:webrtc_common",
         "../../media:rtc_media_base",
       ]
+
+      if (rtc_build_libyuv) {
+        deps += [ "$rtc_libyuv_dir" ]
+        public_deps = [
+          "$rtc_libyuv_dir",
+          ]
+      } else {
+        include_dirs += [ "$rtc_libyuv_dir/include" ]
+      }
     }
+
     if (is_win) {
       sources = [
         "windows/device_info_ds.cc",
@@ -149,13 +159,6 @@ if (!build_with_chromium) {
         ldflags += [
           "-lpthread",
           "-lm",
-        ]
-      }
-      if (is_linux) {
-        ldflags += [
-          "-lrt",
-          "-lXext",
-          "-lX11",
         ]
       }
 

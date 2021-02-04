@@ -7,6 +7,7 @@
 #include "VideoFrameUtils.h"
 #include "webrtc/api/video/video_frame.h"
 #include "mozilla/ShmemPool.h"
+#include "libyuv/rotate.h"
 
 namespace mozilla {
 
@@ -32,22 +33,32 @@ void VideoFrameUtils::InitFrameBufferProperties(
   aDestProps.ntpTimeMs() = aVideoFrame.ntp_time_ms();
   aDestProps.renderTimeMs() = aVideoFrame.render_time_ms();
 
+  // Rotation will be applied during CopyVideoFrameBuffers().
   aDestProps.rotation() = aVideoFrame.rotation();
 
   auto i420 = aVideoFrame.video_frame_buffer()->ToI420();
   auto height = i420->height();
-  aDestProps.yAllocatedSize() = height * i420->StrideY();
-  aDestProps.uAllocatedSize() = ((height + 1) / 2) * i420->StrideU();
-  aDestProps.vAllocatedSize() = ((height + 1) / 2) * i420->StrideV();
+  auto width = i420->width();
 
-  aDestProps.width() = i420->width();
+  if (aVideoFrame.rotation() == webrtc::kVideoRotation_90 ||
+      aVideoFrame.rotation() == webrtc::kVideoRotation_270) {
+    std::swap(width, height);
+  }
+
   aDestProps.height() = height;
+  aDestProps.width() = width;
 
-  aDestProps.yStride() = i420->StrideY();
-  aDestProps.uStride() = i420->StrideU();
-  aDestProps.vStride() = i420->StrideV();
+  aDestProps.yStride() = width;
+  aDestProps.uStride() = (width + 1) / 2;
+  aDestProps.vStride() = (width + 1) / 2;
+
+  aDestProps.yAllocatedSize() = height * aDestProps.yStride();
+  aDestProps.uAllocatedSize() = ((height + 1) / 2) * aDestProps.uStride();
+  aDestProps.vAllocatedSize() = ((height + 1) / 2) * aDestProps.vStride();
 }
 
+// Performs copying to a shared memory or a temporary buffer.
+// Apply rotation here to avoid extra copying.
 void VideoFrameUtils::CopyVideoFrameBuffers(uint8_t* aDestBuffer,
                                             const size_t aDestBufferSize,
                                             const webrtc::VideoFrame& aFrame) {
@@ -62,23 +73,48 @@ void VideoFrameUtils::CopyVideoFrameBuffers(uint8_t* aDestBuffer,
       (i420->DataY() < i420->DataU()) && (i420->DataU() < i420->DataV()) &&
       //  Check that the last plane ends at firstPlane[totalsize]
       (&i420->DataY()[aggregateSize] ==
-       &i420->DataV()[((i420->height() + 1) / 2) * i420->StrideV()])) {
+       &i420->DataV()[((i420->height() + 1) / 2) * i420->StrideV()]) &&
+      aFrame.rotation() == webrtc::kVideoRotation_0) {
     memcpy(aDestBuffer, i420->DataY(), aggregateSize);
     return;
   }
 
-  // Copy each plane
-  size_t offset = 0;
-  size_t size;
-  auto height = i420->height();
-  size = height * i420->StrideY();
-  memcpy(&aDestBuffer[offset], i420->DataY(), size);
-  offset += size;
-  size = ((height + 1) / 2) * i420->StrideU();
-  memcpy(&aDestBuffer[offset], i420->DataU(), size);
-  offset += size;
-  size = ((height + 1) / 2) * i420->StrideV();
-  memcpy(&aDestBuffer[offset], i420->DataV(), size);
+  libyuv::RotationMode rotationMode;
+  int width = i420->width();
+  int height = i420->height();
+
+  switch (aFrame.rotation()) {
+    case webrtc::kVideoRotation_90:
+      rotationMode = libyuv::kRotate90;
+      std::swap(width, height);
+      break;
+    case webrtc::kVideoRotation_270:
+      rotationMode = libyuv::kRotate270;
+      std::swap(width, height);
+      break;
+    case webrtc::kVideoRotation_180:
+      rotationMode = libyuv::kRotate180;
+      break;
+    case webrtc::kVideoRotation_0:
+    default:
+      rotationMode = libyuv::kRotate0;
+      break;
+  }
+
+  int strideY = width;
+  int strideUV = (width + 1) / 2;
+  off_t offsetY = 0;
+  off_t offsetU = height * strideY;
+  off_t offsetV = offsetU + ((height + 1) / 2) * strideUV;
+
+  libyuv::I420Rotate(i420->DataY(), i420->StrideY(),
+                     i420->DataU(), i420->StrideU(),
+                     i420->DataV(), i420->StrideV(),
+                     &aDestBuffer[offsetY], strideY,
+                     &aDestBuffer[offsetU], strideUV,
+                     &aDestBuffer[offsetV], strideUV,
+                     i420->width(), i420->height(),
+                     rotationMode);
 }
 
 void VideoFrameUtils::CopyVideoFrameBuffers(
