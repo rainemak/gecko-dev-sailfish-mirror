@@ -1769,6 +1769,9 @@ AC_SUBST(MOZ_ENABLE_QMSYSTEM2)
 AC_SUBST_LIST(MOZ_QT_CFLAGS)
 AC_SUBST_LIST(MOZ_QT_LIBS)
 
+AC_SUBST(MOC)
+AC_SUBST(RCC)
+
 dnl ========================================================
 dnl =
 dnl = Components & Features

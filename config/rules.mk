@@ -37,6 +37,8 @@ endif
 
 endif
 
+REPORT_BUILD_VERBOSE_MOC = $(REPORT_BUILD)
+
 EXEC			= exec
 
 ################################################################################
@@ -613,6 +615,21 @@ relativize = $(if $(filter /%,$1),$(DEPTH)$(subst $(space),,$(foreach d,$(subst 
 else
 relativize = $1
 endif
+
+# DEFINES and ACDEFINES are needed here to enable conditional compilation of Q_OBJECTs:
+# 'moc' only knows about #defines it gets on the command line (-D...), not in
+# included headers like mozilla-config.h
+$(filter moc_%.cpp,$(CPPSRCS)): moc_%.cpp: $(srcdir)/%.h
+	$(REPORT_BUILD_VERBOSE)
+	$(MOC) $(DEFINES) $(ACDEFINES) $< $(OUTOPTION)$@
+
+$(filter moc_%.cc,$(CPPSRCS)): moc_%.cc: $(srcdir)/%.cc
+	$(REPORT_BUILD_VERBOSE)
+	$(MOC) $(DEFINES) $(ACDEFINES) $(_VPATH_SRCS:.cc=.h) $(OUTOPTION)$@
+
+$(filter qrc_%.cpp,$(CPPSRCS)): qrc_%.cpp: $(srcdir)/%.qrc
+	$(REPORT_BUILD_VERBOSE)
+	$(RCC) -name $* $< $(OUTOPTION)$@
 
 ifdef ASFILES
 # The AS_DASH_C_FLAG is needed cause not all assemblers (Solaris) accept
