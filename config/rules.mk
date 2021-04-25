@@ -422,7 +422,7 @@ $(PROGRAM): $(PROGOBJS) $(STATIC_LIBS) $(EXTRA_DEPS) $(call resfile,$(PROGRAM)) 
 ifeq (_WINNT,$(GNU_CC)_$(OS_ARCH))
 	$(LINKER) -OUT:$@ -PDB:$(LINK_PDBFILE) -IMPLIB:$(basename $(@F)).lib $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(MOZ_PROGRAM_LDFLAGS) $($(notdir $@)_OBJS) $(filter %.res,$^) $(STATIC_LIBS) $(SHARED_LIBS) $(OS_LIBS)
 else # !WINNT || GNU_CC
-	$(call EXPAND_CC_OR_CXX,$@) -o $@ $(COMPUTED_CXX_LDFLAGS) $(PGO_CFLAGS) $($(notdir $@)_OBJS) $(filter %.res,$^) $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(STATIC_LIBS) $(MOZ_PROGRAM_LDFLAGS) $(SHARED_LIBS) $(OS_LIBS)
+	$(call EXPAND_CC_OR_CXX,$@) -o $@ $(COMPUTED_CXX_LDFLAGS) $(PGO_CFLAGS) $($(notdir $@)_OBJS) $(filter %.res,$^) $(WIN32_EXE_LDFLAGS) $(LDFLAGS) -Wl,--whole-archive $(STATIC_LIBS) -Wl,--no-whole-archive $(MOZ_PROGRAM_LDFLAGS) $(SHARED_LIBS) $(OS_LIBS)
 	$(call py_action,check_binary,--target $@)
 endif # WINNT && !GNU_CC
 
