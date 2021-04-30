@@ -175,7 +175,7 @@ class RefCountedWebrtcVideoEncoder {
 class WebrtcGmpVideoEncoder : public GMPVideoEncoderCallbackProxy,
                               public RefCountedWebrtcVideoEncoder {
  public:
-  WebrtcGmpVideoEncoder();
+  WebrtcGmpVideoEncoder(webrtc::VideoCodecType aType);
 
   // Implement VideoEncoder interface, sort of.
   // (We cannot use |Release|, since that's needed for nsRefPtr)
@@ -305,6 +305,7 @@ class WebrtcGmpVideoEncoder : public GMPVideoEncoderCallbackProxy,
   webrtc::EncodedImageCallback* mCallback;
   uint64_t mCachedPluginId;
   std::string mPCHandle;
+  webrtc::VideoCodecType mCodecType;
 };
 
 // Basically a strong ref to a RefCountedWebrtcVideoEncoder, that also
@@ -314,10 +315,7 @@ class WebrtcGmpVideoEncoder : public GMPVideoEncoderCallbackProxy,
 // delete the "real" encoder.
 class WebrtcVideoEncoderProxy : public WebrtcVideoEncoder {
  public:
-  explicit WebrtcVideoEncoderProxy(
-      RefPtr<RefCountedWebrtcVideoEncoder> aEncoder)
-      : mEncoderImpl(std::move(aEncoder)) {}
-
+  explicit WebrtcVideoEncoderProxy(webrtc::VideoCodecType aType) : mEncoderImpl(new WebrtcGmpVideoEncoder(aType)) {}
   virtual ~WebrtcVideoEncoderProxy() {
     RegisterEncodeCompleteCallback(nullptr);
   }
@@ -357,7 +355,7 @@ class WebrtcVideoEncoderProxy : public WebrtcVideoEncoder {
 
 class WebrtcGmpVideoDecoder : public GMPVideoDecoderCallbackProxy {
  public:
-  WebrtcGmpVideoDecoder();
+  WebrtcGmpVideoDecoder(webrtc::VideoCodecType aType);
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(WebrtcGmpVideoDecoder);
 
   // Implement VideoEncoder interface, sort of.
@@ -446,6 +444,8 @@ class WebrtcGmpVideoDecoder : public GMPVideoDecoderCallbackProxy {
   Atomic<uint64_t> mCachedPluginId;
   Atomic<GMPErr, ReleaseAcquire> mDecoderStatus;
   std::string mPCHandle;
+  webrtc::VideoCodecType mCodecType;
+  webrtc::VideoCodec mCodecSettings;
 };
 
 // Basically a strong ref to a WebrtcGmpVideoDecoder, that also translates
@@ -455,7 +455,7 @@ class WebrtcGmpVideoDecoder : public GMPVideoDecoderCallbackProxy {
 // the "real" encoder.
 class WebrtcVideoDecoderProxy : public WebrtcVideoDecoder {
  public:
-  WebrtcVideoDecoderProxy() : mDecoderImpl(new WebrtcGmpVideoDecoder) {}
+  WebrtcVideoDecoderProxy(webrtc::VideoCodecType aType) : mDecoderImpl(new WebrtcGmpVideoDecoder(aType)) {}
 
   virtual ~WebrtcVideoDecoderProxy() {
     RegisterDecodeCompleteCallback(nullptr);

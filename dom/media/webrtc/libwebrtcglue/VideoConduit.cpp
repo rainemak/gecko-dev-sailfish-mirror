@@ -1688,16 +1688,38 @@ std::unique_ptr<webrtc::VideoDecoder> WebrtcVideoConduit::CreateDecoder(
     return decoder;
   }
 
-  switch (aType) {
+  // Attempt to create a GMP decoder.
+  {
+    nsCString tag;
+
+    switch (aType) {
     case webrtc::VideoCodecType::kVideoCodecH264:
-      // get an external decoder
-      decoder.reset(GmpVideoCodec::CreateDecoder());
+      tag = "h264"_ns;
+      break;
+    case webrtc::VideoCodecType::kVideoCodecVP8:
+      tag = "vp8"_ns;
+      break;
+    case webrtc::VideoCodecType::kVideoCodecVP9:
+      tag = "vp9"_ns;
+      break;
+    default:
+      return nullptr;
+    }
+
+    if (HaveGMPFor(nsLiteralCString(GMP_API_VIDEO_DECODER), { tag })) {
+      decoder.reset(GmpVideoCodec::CreateDecoder(aType));
       if (decoder) {
         mRecvCodecPluginID =
             static_cast<WebrtcVideoDecoder*>(decoder.get())->PluginID();
       }
-      break;
+      return decoder;
+    }
+  }
 
+  switch (aType) {
+    case webrtc::VideoCodecType::kVideoCodecH264:
+      // No support for software h264.
+      return nullptr;
     case webrtc::VideoCodecType::kVideoCodecVP8:
 #ifdef MOZ_WEBRTC_MEDIACODEC
       // attempt to get a decoder
@@ -1733,7 +1755,6 @@ std::unique_ptr<webrtc::VideoDecoder> WebrtcVideoConduit::CreateDecoder(
       MOZ_ASSERT(webrtc::VP9Decoder::IsSupported());
       decoder = webrtc::VP9Decoder::Create();
       break;
-
     default:
       break;
   }
@@ -1759,15 +1780,34 @@ std::unique_ptr<webrtc::VideoEncoder> WebrtcVideoConduit::CreateEncoder(
     }
   }
 
+  nsCString tag;
   switch (aType) {
     case webrtc::VideoCodecType::kVideoCodecH264:
-      // get an external encoder
-      encoder.reset(GmpVideoCodec::CreateEncoder());
-      if (encoder) {
-        mSendCodecPluginID =
-            static_cast<WebrtcVideoEncoder*>(encoder.get())->PluginID();
-      }
+      tag = "h264"_ns;
       break;
+    case webrtc::VideoCodecType::kVideoCodecVP8:
+      tag = "vp8"_ns;
+      break;
+    case webrtc::VideoCodecType::kVideoCodecVP9:
+      tag = "vp9"_ns;
+      break;
+    default:
+      return nullptr;
+  }
+
+  if (HaveGMPFor(nsLiteralCString(GMP_API_VIDEO_ENCODER), { tag })) {
+    encoder.reset(GmpVideoCodec::CreateEncoder(aType));
+    if (encoder) {
+      mSendCodecPluginID =
+          static_cast<WebrtcVideoEncoder*>(encoder.get())->PluginID();
+    }
+    return encoder;
+  }
+
+  switch (aType) {
+    case webrtc::VideoCodecType::kVideoCodecH264:
+      // No support for software h264.
+      return nullptr;
 
     case webrtc::VideoCodecType::kVideoCodecVP8:
       encoder.reset(new webrtc::EncoderSimulcastProxy(

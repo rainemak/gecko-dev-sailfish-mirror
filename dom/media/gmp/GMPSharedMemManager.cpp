@@ -23,13 +23,16 @@ bool GMPSharedMemManager::MgrAllocShmem(
     ipc::Shmem::SharedMemory::SharedMemoryType aType, ipc::Shmem* aMem) {
   mData->CheckThread();
 
-  // first look to see if we have a free buffer large enough
-  for (uint32_t i = 0; i < GetGmpFreelist(aClass).Length(); i++) {
-    MOZ_ASSERT(GetGmpFreelist(aClass)[i].IsWritable());
-    if (aSize <= GetGmpFreelist(aClass)[i].Size<uint8_t>()) {
-      *aMem = GetGmpFreelist(aClass)[i];
-      GetGmpFreelist(aClass).RemoveElementAt(i);
-      return true;
+  {
+    // first look to see if we have a free buffer large enough
+    MutexAutoLock lock(mMutex);
+    for (uint32_t i = 0; i < GetGmpFreelist(aClass).Length(); i++) {
+      MOZ_ASSERT(GetGmpFreelist(aClass)[i].IsWritable());
+      if (aSize <= GetGmpFreelist(aClass)[i].Size<uint8_t>()) {
+        *aMem = GetGmpFreelist(aClass)[i];
+        GetGmpFreelist(aClass).RemoveElementAt(i);
+        return true;
+      }
     }
   }
 
@@ -38,6 +41,7 @@ bool GMPSharedMemManager::MgrAllocShmem(
   aSize = (aSize + (pagesize - 1)) & ~(pagesize - 1);  // round up to page size
   bool retval = Alloc(aSize, aType, aMem);
   if (retval) {
+    MutexAutoLock lock(mMutex);
     // The allocator (or NeedsShmem call) should never return less than we ask
     // for...
     MOZ_ASSERT(aMem->Size<uint8_t>() >= aSize);
@@ -67,11 +71,18 @@ bool GMPSharedMemManager::MgrDeallocShmem(GMPSharedMem::GMPMemoryClasses aClass,
   // XXX This works; there are better pool algorithms.  We need to avoid
   // "falling off a cliff" with too low a number
   if (GetGmpFreelist(aClass).Length() > 10) {
-    Dealloc(std::move(GetGmpFreelist(aClass)[0]));
-    GetGmpFreelist(aClass).RemoveElementAt(0);
+    ipc::Shmem element;
+    {
+      MutexAutoLock lock(mMutex);
+      element = GetGmpFreelist(aClass)[0];
+      GetGmpFreelist(aClass).RemoveElementAt(0);
+      mData->mGmpAllocated[aClass]--;
+    }
+    Dealloc(std::move(element));
     // The allocation numbers will be fubar on the Child!
-    mData->mGmpAllocated[aClass]--;
   }
+
+  MutexAutoLock lock(mMutex);
   for (uint32_t i = 0; i < GetGmpFreelist(aClass).Length(); i++) {
     MOZ_ASSERT(GetGmpFreelist(aClass)[i].IsWritable());
     total += GetGmpFreelist(aClass)[i].Size<uint8_t>();
@@ -86,6 +97,7 @@ bool GMPSharedMemManager::MgrDeallocShmem(GMPSharedMem::GMPMemoryClasses aClass,
 }
 
 uint32_t GMPSharedMemManager::NumInUse(GMPSharedMem::GMPMemoryClasses aClass) {
+  MutexAutoLock lock(mMutex);
   return mData->mGmpAllocated[aClass] - GetGmpFreelist(aClass).Length();
 }
 

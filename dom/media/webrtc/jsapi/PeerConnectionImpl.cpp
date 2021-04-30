@@ -617,9 +617,7 @@ class ConfigureCodec {
         mUseAudioFec(false),
         mRedUlpfecEnabled(false),
         mDtmfEnabled(false) {
-    mSoftwareH264Enabled = PeerConnectionCtx::GetInstance()->gmpHasH264();
-
-    if (WebrtcVideoConduit::HasH264Hardware()) {
+    if (WebrtcVideoConduit::HasH264Hardware() || PeerConnectionCtx::GetInstance()->gmpHasH264()) {
       branch->GetBoolPref("media.webrtc.hw.h264.enabled",
                           &mHardwareH264Enabled);
     }
@@ -698,9 +696,7 @@ class ConfigureCodec {
             // We're assuming packetization mode 0 is unsupported by
             // hardware.
             videoCodec.mEnabled = false;
-          }
-
-          if (mHardwareH264Enabled) {
+          } else if (mHardwareH264Enabled) {
             videoCodec.mStronglyPreferred = true;
           }
         } else if (videoCodec.mName == "red") {
