@@ -26,7 +26,7 @@ group("modules") {
     "video_processing",
   ]
 
-  if (is_win || is_mac || is_linux || is_bsd) {
+  if ((is_win || is_mac || is_linux || is_bsd) && !is_sfos) {
     public_deps += [ "desktop_capture" ]
   }
 }

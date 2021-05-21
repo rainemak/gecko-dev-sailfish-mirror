@@ -128,6 +128,11 @@ declare_args() {
 }
 
 declare_args() {
+  # Enable special configuration for SFOS
+  is_sfos = true
+}
+
+declare_args() {
   # Set to enable the official build level of optimization. This has nothing
   # to do with branding, but enables an additional level of optimization above
   # release (!is_debug). This might be better expressed as a tri-state
@@ -136,7 +141,7 @@ declare_args() {
   is_official_build = false
 
   # Whether we're a traditional desktop unix.
-  is_desktop_linux = current_os == "linux"
+  is_desktop_linux = (current_os == "linux") && !is_sfos
 
   # Set to true when compiling with the Clang compiler. Typically this is used
   # to configure warnings.
@@ -144,7 +149,8 @@ declare_args() {
       current_os == "mac" || current_os == "ios" || current_os == "chromeos" ||
       current_os == "fuchsia" || current_os == "freebsd" || current_os == "openbsd" ||
       (current_os == "linux" && current_cpu != "s390x" &&
-       current_cpu != "s390" && current_cpu != "ppc64" && current_cpu != "ppc")
+       current_cpu != "s390" && current_cpu != "ppc64" && current_cpu != "ppc" &&
+       !is_sfos)
 
   # Allows the path to a custom target toolchain to be injected as a single
   # argument, and set as the default toolchain.
@@ -301,6 +307,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = false
   is_win = true
+  is_sfos = false
 } else if (current_os == "mac") {
   is_android = false
   is_chromeos = false
@@ -311,6 +318,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = true
   is_win = false
+  is_sfos = false
 } else if (current_os == "android") {
   is_android = true
   is_chromeos = false
@@ -321,6 +329,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = true
   is_win = false
+  is_sfos = false
 } else if (current_os == "chromeos") {
   is_android = false
   is_chromeos = true
@@ -331,6 +340,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = true
   is_win = false
+  is_sfos = false
 } else if (current_os == "nacl") {
   # current_os == "nacl" will be passed by the nacl toolchain definition.
   # It is not set by default or on the command line. We treat is as a
@@ -344,6 +354,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = true
   is_posix = true
   is_win = false
+  is_sfos = false
 } else if (current_os == "fuchsia") {
   is_android = false
   is_chromeos = false
@@ -354,6 +365,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = true
   is_win = false
+  is_sfos = false
 } else if (current_os == "ios") {
   is_android = false
   is_chromeos = false
@@ -364,6 +376,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = true
   is_win = false
+  is_sfos = false
 } else if (current_os == "linux") {
   is_android = false
   is_chromeos = false
@@ -374,6 +387,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = true
   is_win = false
+  is_sfos = true
 } else {
   # AIX, BSDs, Solaris, etc.
   is_android = false
@@ -385,6 +399,7 @@ if (current_os == "win" || current_os == "winrt_81" ||
   is_nacl = false
   is_posix = true
   is_win = false
+  is_sfos = false
 }
 
 # A list of BSD systems maintained by community
