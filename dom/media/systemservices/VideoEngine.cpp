@@ -70,7 +70,7 @@ void VideoEngine::CreateVideoCapture(int32_t& id,
       entry.VideoCapture()->SetApplyRotation(true);
     }
   } else {
-#ifndef WEBRTC_ANDROID
+#if !defined(WEBRTC_ANDROID) && !defined(MOZ_EMBEDLITE)
 #  ifdef MOZ_X11
     webrtc::VideoCaptureModule* captureModule;
     auto type = mCaptureDevInfo.type;
@@ -93,7 +93,7 @@ void VideoEngine::CreateVideoCapture(int32_t& id,
                                  id, deviceUniqueIdUTF8, mCaptureDevInfo.type));
 #  endif
 #else
-    MOZ_ASSERT("CreateVideoCapture NO DESKTOP CAPTURE IMPL ON ANDROID" ==
+    MOZ_ASSERT("CreateVideoCapture NO DESKTOP CAPTURE IMPL" ==
                nullptr);
 #endif
   }
@@ -185,13 +185,13 @@ VideoEngine::GetOrCreateVideoCaptureDeviceInfo() {
     case webrtc::CaptureDeviceType::Browser:
     case webrtc::CaptureDeviceType::Window:
     case webrtc::CaptureDeviceType::Screen: {
-#if !defined(WEBRTC_ANDROID) && !defined(WEBRTC_IOS)
+#if !defined(WEBRTC_ANDROID) && !defined(WEBRTC_IOS) && !defined(MOZ_EMBEDLITE)
       mDeviceInfo.reset(webrtc::DesktopCaptureImpl::CreateDeviceInfo(
           mId, mCaptureDevInfo.type));
       LOG(("screen capture: Finished creating new device."));
 #else
       MOZ_ASSERT(
-          "GetVideoCaptureDeviceInfo NO DESKTOP CAPTURE IMPL ON ANDROID" ==
+          "GetVideoCaptureDeviceInfo NO DESKTOP CAPTURE IMPL" ==
           nullptr);
       mDeviceInfo.reset();
 #endif
