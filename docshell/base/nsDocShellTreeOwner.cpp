@@ -447,10 +447,7 @@ NS_IMETHODIMP
 nsDocShellTreeOwner::Destroy() {
   nsCOMPtr<nsIWebBrowserChrome> webBrowserChrome = GetWebBrowserChrome();
   if (webBrowserChrome) {
-    // XXX: this is weird, but we used to call a method here
-    // (webBrowserChrome->DestroyBrowserWindow()) whose implementations all
-    // failed like this, so...
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return webBrowserChrome->DestroyBrowserWindow();
   }
 
   return NS_ERROR_NULL_POINTER;

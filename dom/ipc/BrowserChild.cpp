@@ -620,6 +620,14 @@ BrowserChild::SetChromeFlags(uint32_t aChromeFlags) {
 }
 
 NS_IMETHODIMP
+BrowserChild::DestroyBrowserWindow()
+{
+  NS_WARNING("BrowserChild::DestroyBrowserWindow not supported in BrowserChild");
+
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 BrowserChild::RemoteSizeShellTo(int32_t aWidth, int32_t aHeight,
                                 int32_t aShellItemWidth,
                                 int32_t aShellItemHeight) {

@@ -99,6 +99,12 @@ interface nsIWebBrowserChrome : nsISupports
     attribute unsigned long chromeFlags;
 
     /**
+     * Asks the implementer to destroy the window associated with this
+     * WebBrowser object.
+     */
+    void destroyBrowserWindow();
+
+    /**
      * Shows the window as a modal window.
      */
     void showAsModal();
