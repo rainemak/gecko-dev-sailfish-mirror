@@ -499,12 +499,14 @@ RefPtr<GenericPromise> GeckoMediaPluginServiceParent::LoadFromEnvironment() {
     }
   }
 
-  mScannedPluginOnDisk = true;
   return GenericPromise::All(thread, promises)
       ->Then(
           thread, __func__,
-          []() { return GenericPromise::CreateAndResolve(true, __func__); },
-          []() {
+          [this]() {
+            mScannedPluginOnDisk = true;
+            return GenericPromise::CreateAndResolve(true, __func__); },
+          [this]() {
+            mScannedPluginOnDisk = true;
             return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
           });
 }
@@ -683,9 +685,13 @@ nsresult GeckoMediaPluginServiceParent::EnsurePluginsOnDiskScanned() {
     // cause an event to be dispatched to which scans for plugins. We
     // dispatch a sync event to the GMP thread here in order to wait until
     // after the GMP thread has scanned any paths in MOZ_GMP_PATH.
-    nsresult rv = GMPDispatch(new mozilla::Runnable("GMPDummyRunnable"),
+    do {
+      nsresult rv = GMPDispatch(new mozilla::Runnable("GMPDummyRunnable"),
                               NS_DISPATCH_SYNC);
-    NS_ENSURE_SUCCESS(rv, rv);
+      NS_ENSURE_SUCCESS(rv, rv);
+      // The path scaning is broken down into multiple jobs so the blocking task
+      // may get inserted between them, keep polling until all jobs are complete.
+    } while (!mScannedPluginOnDisk);
     MOZ_ASSERT(mScannedPluginOnDisk, "Should have scanned MOZ_GMP_PATH by now");
   }
 
