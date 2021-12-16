@@ -8222,6 +8222,19 @@
     mirror: always
 #endif  # ANDROID
 
+#ifdef MOZ_EMBEDLITE
+  # Enable the gecko-camera based decoder by default.
+-   name: media.gecko-camera-codec.enabled
+    type: RelaxedAtomicBool
+    value: true
+    mirror: always
+
+-   name: media.gecko-camera-codec.preferred
+    type: RelaxedAtomicBool
+    value: true
+    mirror: always
+#endif  # MOZ_EMBEDLITE
+
 #ifdef MOZ_OMX
 -   name: media.omx.enabled
     type: bool
