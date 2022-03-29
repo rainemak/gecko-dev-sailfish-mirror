@@ -593,23 +593,41 @@ MediaResult FFmpegVideoDecoder<LIBAV_VER>::DoDecode(
 }
 
 gfx::YUVColorSpace FFmpegVideoDecoder<LIBAV_VER>::GetFrameColorSpace() const {
+  AVColorSpace colorSpace = AVCOL_SPC_UNSPECIFIED;
+#if LIBAVCODEC_VERSION_MAJOR > 58
+  colorSpace = mFrame->colorspace;
+#else
   if (mLib->av_frame_get_colorspace) {
-    switch (mLib->av_frame_get_colorspace(mFrame)) {
-#if LIBAVCODEC_VERSION_MAJOR >= 55
-      case AVCOL_SPC_BT2020_NCL:
-      case AVCOL_SPC_BT2020_CL:
-        return gfx::YUVColorSpace::BT2020;
-#endif
-      case AVCOL_SPC_BT709:
-        return gfx::YUVColorSpace::BT709;
-      case AVCOL_SPC_SMPTE170M:
-      case AVCOL_SPC_BT470BG:
-        return gfx::YUVColorSpace::BT601;
-      default:
-        break;
-    }
+    colorSpace = (AVColorSpace)mLib->av_frame_get_colorspace(mFrame);
   }
-  return DefaultColorSpace({mFrame->width, mFrame->height});
+#endif
+  switch (colorSpace) {
+#if LIBAVCODEC_VERSION_MAJOR >= 55
+    case AVCOL_SPC_BT2020_NCL:
+    case AVCOL_SPC_BT2020_CL:
+      return gfx::YUVColorSpace::BT2020;
+#endif
+    case AVCOL_SPC_BT709:
+      return gfx::YUVColorSpace::BT709;
+    case AVCOL_SPC_SMPTE170M:
+    case AVCOL_SPC_BT470BG:
+      return gfx::YUVColorSpace::BT601;
+    default:
+      return DefaultColorSpace({mFrame->width, mFrame->height});
+  }
+}
+
+gfx::ColorRange FFmpegVideoDecoder<LIBAV_VER>::GetFrameColorRange() const {
+  AVColorRange range = AVCOL_RANGE_UNSPECIFIED;
+#if LIBAVCODEC_VERSION_MAJOR > 58
+  range = mFrame->color_range;
+#else
+  if (mLib->av_frame_get_color_range) {
+    range = (AVColorRange)mLib->av_frame_get_color_range(mFrame);
+  }
+#endif
+  return range == AVCOL_RANGE_JPEG ? gfx::ColorRange::FULL
+                                   : gfx::ColorRange::LIMITED;
 }
 
 MediaResult FFmpegVideoDecoder<LIBAV_VER>::CreateImage(
@@ -679,12 +697,7 @@ MediaResult FFmpegVideoDecoder<LIBAV_VER>::CreateImage(
 #endif
   }
   b.mYUVColorSpace = GetFrameColorSpace();
-
-  if (mLib->av_frame_get_color_range) {
-    auto range = mLib->av_frame_get_color_range(mFrame);
-    b.mColorRange = range == AVCOL_RANGE_JPEG ? gfx::ColorRange::FULL
-                                              : gfx::ColorRange::LIMITED;
-  }
+  b.mColorRange = GetFrameColorRange();
 
   RefPtr<VideoData> v = VideoData::CreateAndCopyData(
       mInfo, mImageContainer, aOffset, TimeUnit::FromMicroseconds(aPts),
