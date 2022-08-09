@@ -36,3 +36,7 @@ ipc/chromium/src/third_party/libevent/patches/:
 
 - "android-api-level.patch". Fixes the build under clang or NDK r16.
   See bug 1281596, bug 1282141, and bug 1428182.
+
+You also need to modify the EVENT__HAVE_ARC4RANDOM and EVENT__HAVE_ARC4RANDOM_BUF
+constants in the generated Linux header to account for the results of the arc4random
+and arc4random_buf configure checks.
