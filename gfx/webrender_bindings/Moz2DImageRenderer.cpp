@@ -179,7 +179,7 @@ void AddNativeFontHandle(WrFontKey aKey, void* aHandle, uint32_t aIndex) {
 #elif defined(XP_WIN)
     font.mUnscaledFont = new UnscaledFontDWrite(
         reinterpret_cast<IDWriteFontFace*>(aHandle), nullptr);
-#elif defined(ANDROID)
+#elif defined(ANDROID) || defined(MOZ_WIDGET_QT)
     font.mUnscaledFont = new UnscaledFontFreeType(
         reinterpret_cast<const char*>(aHandle), aIndex);
 #else
@@ -253,7 +253,7 @@ static RefPtr<UnscaledFont> GetUnscaledFont(Translator* aTranslator,
       FontType::MAC;
 #elif defined(XP_WIN)
       FontType::DWRITE;
-#elif defined(ANDROID)
+#elif defined(ANDROID) || defined(MOZ_WIDGET_QT)
       FontType::FREETYPE;
 #else
       FontType::FONTCONFIG;

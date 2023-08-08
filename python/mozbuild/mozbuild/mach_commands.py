@@ -2358,15 +2358,15 @@ class CreateMachEnvironment(MachCommandBase):
 
         # This can fail on some platforms. See
         # https://bugzilla.mozilla.org/show_bug.cgi?id=1660120
-        try:
-            manager.install_pip_requirements(
-                os.path.join(self.topsrcdir, "build", "glean_requirements.txt")
-            )
-        except subprocess.CalledProcessError:
-            print(
-                "Could not install glean_sdk, so telemetry will not be "
-                "collected. Continuing."
-            )
+#        try:
+#            manager.install_pip_requirements(
+#                os.path.join(self.topsrcdir, "build", "glean_requirements.txt")
+#            )
+#        except subprocess.CalledProcessError:
+#            print(
+#                "Could not install glean_sdk, so telemetry will not be "
+#                "collected. Continuing."
+#            )
         print("Mach environment created.")
 
 

@@ -40,6 +40,8 @@
 #  include <gtk/gtk.h>
 #  include "gfxPlatformGtk.h"
 #  include "mozilla/WidgetUtilsGtk.h"
+#elif MOZ_WIDGET_QT
+#  include "gfxQtPlatform.h"
 #endif
 
 #ifdef MOZ_X11
@@ -2336,8 +2338,12 @@ gfxPlatformFontList::PrefFontList* gfxFcPlatformFontList::FindGenericFamilies(
           // -- select the fonts to be used for the generic
           auto prefFonts = MakeUnique<PrefFontList>();  // can be empty but in
                                                         // practice won't happen
+#if defined(MOZ_WIDGET_GTK)
           uint32_t limit =
               gfxPlatformGtk::GetPlatform()->MaxGenericSubstitions();
+#else
+          uint32_t limit = gfxQtPlatform::GetPlatform()->MaxGenericSubstitions();
+#endif
           bool foundFontWithLang = false;
           for (int i = 0; i < faces->nfont; i++) {
             FcPattern* font = faces->fonts[i];

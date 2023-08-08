@@ -29,7 +29,7 @@
 #  include "UnscaledFontMac.h"
 #endif
 
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
 #  include "ScaledFontFontconfig.h"
 #  include "NativeFontResourceFreeType.h"
 #  include "UnscaledFontFreeType.h"
@@ -636,7 +636,7 @@ already_AddRefed<ScaledFont> Factory::CreateScaledFontForMacFont(
 }
 #endif
 
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
 already_AddRefed<ScaledFont> Factory::CreateScaledFontForFontconfigFont(
     const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
     RefPtr<SharedFTFace> aFace, FcPattern* aPattern) {

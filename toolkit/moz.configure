@@ -265,8 +265,7 @@ def toolkit_choices(target):
     elif target.os == "Android":
         return ("cairo-android",)
     else:
-        return ("cairo-gtk3", "cairo-gtk3-wayland")
-
+        return ('cairo-gtk3', 'cairo-gtk3-wayland', 'cairo-qt')
 
 @depends(toolkit_choices)
 def toolkit_default(choices):
@@ -385,7 +384,7 @@ set_define(gl_provider_define, True)
 # ==============================================================
 @depends(toolkit)
 def pdf_printing(toolkit):
-    if toolkit in ("windows", "gtk", "android"):
+    if toolkit in ('windows', 'gtk', 'android', 'qt'):
         return True
 
 
@@ -426,7 +425,8 @@ option(env="USE_FC_FREETYPE", help="Force-enable the use of fontconfig freetype"
 
 @depends("USE_FC_FREETYPE", toolkit)
 def fc_freetype(value, toolkit):
-    if value or (toolkit == "gtk" and value.origin == "default"):
+    if value or (toolkit in ('gtk', 'qt') and
+                 value.origin == 'default'):
         return True
 
 

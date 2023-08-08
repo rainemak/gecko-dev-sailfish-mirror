@@ -144,6 +144,32 @@ elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
             "XlibDisplay.cpp",
         ]
 
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
+    EXPORTS += [
+        'gfxFT2FontBase.h',
+        'gfxQtNativeRenderer.h',
+        'gfxQtPlatform.h',
+    ]
+    EXPORTS.mozilla.gfx += [
+        'PrintTargetPDF.h',
+    ]
+    SOURCES += [
+        'gfxFcPlatformFontList.cpp',
+        'gfxFT2FontBase.cpp',
+        'gfxFT2Utils.cpp',
+        'gfxQtPlatform.cpp',
+        'PrintTargetPDF.cpp',
+    ]
+
+    if CONFIG['MOZ_X11']:
+        EXPORTS += [
+            'gfxXlibSurface.h',
+        ]
+        SOURCES += [
+            'gfxQtNativeRenderer.cpp',
+            'gfxXlibSurface.cpp',
+        ]
+
 elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
     EXPORTS += [
         "gfxDWriteFonts.h",
@@ -267,7 +293,7 @@ LOCAL_INCLUDES += [
     "/dom/xml",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android", "gtk"):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk', 'qt'):
     DEFINES["MOZ_ENABLE_FREETYPE"] = True
 
 if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
@@ -283,7 +309,7 @@ CFLAGS += CONFIG["TK_CFLAGS"]
 if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android"):
     CXXFLAGS += CONFIG["CAIRO_FT_CFLAGS"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk', 'qt'):
     CXXFLAGS += CONFIG["MOZ_PANGO_CFLAGS"]
 
 if CONFIG["MOZ_WAYLAND"]:

@@ -61,7 +61,7 @@
                 <menuitem id="menu_sendLink"
                           command="Browser:SendLink" data-l10n-id="menu-file-email-link"/>
                 <menuseparator/>
-#if !defined(MOZ_WIDGET_GTK)
+#if !defined(MOZ_WIDGET_GTK) && !defined(MOZ_WIDGET_QT)
                 <menuitem id="menu_printSetup"
                           command="cmd_pageSetup" data-l10n-id="menu-file-print-setup" hidden="true"/>
 #endif

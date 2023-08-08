@@ -114,6 +114,7 @@ def old_configure_options(*options):
     "--with-branding",
     "--with-distribution-id",
     "--with-macbundlename-prefix",
+    "--with-qtdir",
     "--with-system-libevent",
     "--with-system-png",
     "--with-user-appdir",

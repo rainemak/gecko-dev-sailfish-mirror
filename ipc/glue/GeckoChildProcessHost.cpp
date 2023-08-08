@@ -327,7 +327,7 @@ typedef AndroidProcessLauncher ProcessLauncher;
 // orthogonal IPC machinery there. Conversely, there are tier-3 non-Linux
 // platforms (BSD and Solaris) where we want the "linux" IPC machinery. So
 // we use MOZ_WIDGET_* to choose the platform backend.
-#  elif defined(MOZ_WIDGET_GTK)
+#  elif defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
 class LinuxProcessLauncher : public PosixProcessLauncher {
  public:
   LinuxProcessLauncher(GeckoChildProcessHost* aHost,
@@ -1071,7 +1071,7 @@ void BaseProcessLauncher::MapChildLogging() {
   }
 }
 
-#if defined(MOZ_WIDGET_GTK)
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
 bool LinuxProcessLauncher::DoSetup() {
   if (!PosixProcessLauncher::DoSetup()) {
     return false;
