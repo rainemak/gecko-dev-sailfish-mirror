@@ -89,6 +89,7 @@ def old_configure_options(*options):
     "--datadir",
     "--enable-crashreporter",
     "--enable-dbus",
+    '--enable-dconf',
     "--enable-debug-js-modules",
     "--enable-dump-painting",
     "--enable-extensions",
