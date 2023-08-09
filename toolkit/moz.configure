@@ -2530,3 +2530,11 @@ def oxidized_breakpad(target):
 
 set_config("MOZ_OXIDIZED_BREAKPAD", True, when=oxidized_breakpad)
 set_define("MOZ_OXIDIZED_BREAKPAD", True, when=oxidized_breakpad)
+
+
+# Embedlite
+# =========
+option('--with-embedlite', help='Build with embedlite')
+
+set_config('MOZ_EMBEDLITE', True, when='--with-embedlite')
+set_define('MOZ_EMBEDLITE', True, when='--with-embedlite')
