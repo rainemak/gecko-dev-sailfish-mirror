@@ -479,6 +479,8 @@ input[type=radio] {
   -moz-default-appearance: radio;
   margin-block: 3px 0;
   margin-inline: 5px 3px;
+  width: 16px;
+  height: 16px;
 }
 
 /* check boxes */
@@ -487,6 +489,8 @@ input[type=checkbox] {
   -moz-default-appearance: checkbox;
   margin-block: 3px;
   margin-inline: 4px 3px;
+  width: 16px;
+  height: 16px;
 }
 
 /* Common features of radio buttons and check boxes */
