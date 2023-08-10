@@ -2639,16 +2639,13 @@ impl Build {
 
     fn get_target(&self) -> Result<String, Error> {
         match self.target.clone() {
-            Some(t) => Ok(t),
+            Some(t) => Ok(self.getenv_unwrap("TARGET")?),
             None => Ok(self.getenv_unwrap("TARGET")?),
         }
     }
 
     fn get_host(&self) -> Result<String, Error> {
-        match self.host.clone() {
-            Some(h) => Ok(h),
-            None => Ok(self.getenv_unwrap("HOST")?),
-        }
+        Ok(self.getenv_unwrap("HOST")?)
     }
 
     fn get_opt_level(&self) -> Result<String, Error> {
@@ -2686,7 +2683,13 @@ impl Build {
         if let Some(val) = cache.get(v) {
             return val.clone();
         }
-        let r = env::var(v).ok();
+
+        let r = match &v[..] {
+                        "TARGET" => env::var("RUST_HOST_TARGET").ok(),
+                         _ => None,
+        }.or_else(|| { env::var(v).ok() });
+
+
         self.print(&format!("{} = {:?}", v, r));
         cache.insert(v.to_string(), r.clone());
         r
