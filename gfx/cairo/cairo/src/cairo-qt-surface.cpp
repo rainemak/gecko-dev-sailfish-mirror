@@ -62,7 +62,7 @@
 #include <QtGui/QPixmap>
 #include <QtGui/QBrush>
 #include <QtGui/QPen>
-#include <QWidget>
+#include <QtWidgets/QWidget>
 #include <QtCore/QVarLengthArray>
 
 #if ((QT_VERSION >= QT_VERSION_CHECK(4, 7, 0)) || defined(QT_GLYPHS_API_BACKPORT)) && 0
