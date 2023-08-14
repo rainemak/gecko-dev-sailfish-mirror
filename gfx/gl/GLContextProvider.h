@@ -44,9 +44,11 @@ namespace gl {
 #  define GL_CONTEXT_PROVIDER_DEFAULT GLContextProviderCGL
 #endif
 
-#define GL_CONTEXT_PROVIDER_NAME GLContextProviderEGL
-#include "GLContextProviderImpl.h"
-#undef GL_CONTEXT_PROVIDER_NAME
+#ifndef MOZ_GL_PROVIDER
+#  define GL_CONTEXT_PROVIDER_NAME GLContextProviderEGL
+#  include "GLContextProviderImpl.h"
+#  undef GL_CONTEXT_PROVIDER_NAME
+#endif
 
 #if defined(MOZ_X11)
 #  define GL_CONTEXT_PROVIDER_NAME GLContextProviderGLX
@@ -66,8 +68,10 @@ namespace gl {
 #  endif
 #endif
 
-#ifndef GL_CONTEXT_PROVIDER_DEFAULT
-#  define GL_CONTEXT_PROVIDER_DEFAULT GLContextProviderEGL
+#ifndef MOZ_GL_PROVIDER
+#  ifndef GL_CONTEXT_PROVIDER_DEFAULT
+#    define GL_CONTEXT_PROVIDER_DEFAULT GLContextProviderEGL
+#  endif
 #endif
 
 #if defined(MOZ_WIDGET_UIKIT)
@@ -83,6 +87,7 @@ namespace gl {
 #  define GL_CONTEXT_PROVIDER_NAME MOZ_GL_PROVIDER
 #  include "GLContextProviderImpl.h"
 #  undef GL_CONTEXT_PROVIDER_NAME
+#  undef GL_CONTEXT_PROVIDER_DEFAULT
 #  define GL_CONTEXT_PROVIDER_DEFAULT MOZ_GL_PROVIDER
 #endif
 
