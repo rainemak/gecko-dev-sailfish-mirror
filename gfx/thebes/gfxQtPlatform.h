@@ -32,9 +32,9 @@ public:
                                  const nsACString& aGenericFamily,
                                  nsTArray<nsString>& aListOfFonts) override;
 
-    virtual nsresult UpdateFontList() override;
+    virtual nsresult UpdateFontList(bool aFullRebuild = true);
 
-    virtual gfxPlatformFontList* CreatePlatformFontList() override;
+    virtual bool CreatePlatformFontList() override;
 
     static int32_t GetDPI();
 

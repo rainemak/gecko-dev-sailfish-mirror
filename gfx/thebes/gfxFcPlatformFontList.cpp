@@ -1442,7 +1442,9 @@ nsresult gfxFcPlatformFontList::InitFontListForPlatform() {
   mLocalNames.Clear();
   mFcSubstituteCache.Clear();
 
+#ifdef MOZ_WIDGET_GTK
   ClearSystemFontOptions();
+#endif
 
   mAlwaysUseFontconfigGenerics = PrefFontListsUseOnlyGenerics();
   mOtherFamilyNamesInitialized = true;
@@ -1511,7 +1513,9 @@ nsresult gfxFcPlatformFontList::InitFontListForPlatform() {
     return NS_OK;
   }
 
+#ifdef MOZ_WIDGET_GTK
   UpdateSystemFontOptions();
+#endif
 
   UniquePtr<SandboxPolicy> policy;
 

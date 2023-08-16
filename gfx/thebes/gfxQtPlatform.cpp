@@ -95,20 +95,16 @@ gfxQtPlatform::GetFontList(nsAtom *aLangGroup,
 }
 
 nsresult
-gfxQtPlatform::UpdateFontList()
+UpdateFontList(bool aFullRebuild = true)
 {
-    gfxPlatformFontList::PlatformFontList()->UpdateFontList();
+    gfxPlatformFontList::PlatformFontList()->UpdateFontList(aFullRebuild);
     return NS_OK;
 }
 
-gfxPlatformFontList *gfxQtPlatform::CreatePlatformFontList()
+bool
+CreatePlatformFontList()
 {
-  gfxPlatformFontList* list = new gfxFcPlatformFontList();
-  if (NS_SUCCEEDED(list->InitFontList())) {
-    return list;
-  }
-  gfxPlatformFontList::Shutdown();
-  return nullptr;
+    return gfxPlatformFontList::Initialize(new gfxFcPlatformFontList);
 }
 
 int32_t
