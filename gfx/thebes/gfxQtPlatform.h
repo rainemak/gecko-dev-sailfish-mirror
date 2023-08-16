@@ -8,7 +8,6 @@
 
 #include "gfxPlatform.h"
 #include "nsAutoRef.h"
-#include "nsDataHashtable.h"
 #include "nsTArray.h"
 #ifdef MOZ_X11
 #include "X11/Xlib.h"
