@@ -98,7 +98,7 @@ moz_qicon_to_channel(QImage* image, nsIURI* aURI,
                                   nullPrincipal,
                                   nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED,
                                   nsIContentPolicy::TYPE_INTERNAL_IMAGE,
-                                  NS_LITERAL_CSTRING(IMAGE_ICON_MS));
+                                  nsLiteralCString(IMAGE_ICON_MS));
 }
 
 nsresult
