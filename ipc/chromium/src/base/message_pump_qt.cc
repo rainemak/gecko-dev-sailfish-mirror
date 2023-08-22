@@ -8,7 +8,6 @@
 #include <qevent.h>
 #include <QCoreApplication>
 #include <QThread>
-#include <qtimer.h>
 
 #include "base/message_pump_qt.h"
 
@@ -32,16 +31,20 @@ MessagePumpForUI::MessagePumpForUI() : state_(NULL), qt_pump(*this) {}
 MessagePumpForUI::~MessagePumpForUI() {}
 
 MessagePumpQt::MessagePumpQt(MessagePumpForUI& aPump)
-    : pump(aPump), mTimer(new QTimer(this)) {
+    : pump(aPump), timerId(0) {
   // Register our custom event type, to use in qApp event loop
   sPokeEvent = QEvent::registerEventType();
-  connect(mTimer, SIGNAL(timeout()), this, SLOT(dispatchDelayed()));
-  mTimer->setSingleShot(true);
 }
 
 MessagePumpQt::~MessagePumpQt() {
-  mTimer->stop();
-  delete mTimer;
+}
+
+void MessagePumpQt::timerEvent(QTimerEvent* event) {
+  if (event->timerId() == timerId) {
+    killTimer(timerId);
+    timerId = 0;
+    dispatchDelayed();
+  }
 }
 
 bool MessagePumpQt::event(QEvent* e) {
@@ -58,8 +61,9 @@ void MessagePumpQt::scheduleDelayedIfNeeded(
     return;
   }
 
-  if (mTimer->isActive()) {
-    mTimer->stop();
+  if (timerId != 0) {
+    killTimer(timerId);
+    timerId = 0;
   }
 
   TimeDelta later = delayed_work_time - TimeTicks::Now();
@@ -68,7 +72,7 @@ void MessagePumpQt::scheduleDelayedIfNeeded(
   int laterMsecs = later.InMilliseconds() > std::numeric_limits<int>::max()
                        ? std::numeric_limits<int>::max()
                        : later.InMilliseconds();
-  mTimer->start(laterMsecs > 0 ? laterMsecs : 0);
+  timerId = startTimer(laterMsecs > 0 ? laterMsecs : 0);
 }
 
 void MessagePumpQt::dispatchDelayed() { pump.HandleDispatch(); }

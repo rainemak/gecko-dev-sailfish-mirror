@@ -119,7 +119,6 @@ if os_bsd or os_linux:
         ]
     if CONFIG['MOZ_ENABLE_QT']:
         SOURCES += [
-            '!moc_message_pump_qt.cc',
             'src/base/message_pump_qt.cc',
         ]
 

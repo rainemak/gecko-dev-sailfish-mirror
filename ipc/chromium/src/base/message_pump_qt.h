@@ -12,14 +12,13 @@
 #include "base/message_pump.h"
 #include "base/time.h"
 
-class QTimer;
+class QTimerEvent;
 
 namespace base {
 
 class MessagePumpForUI;
 
 class MessagePumpQt : public QObject {
-  Q_OBJECT
 
  public:
   MessagePumpQt(MessagePumpForUI& pump);
@@ -27,13 +26,14 @@ class MessagePumpQt : public QObject {
 
   virtual bool event(QEvent* e);
   void scheduleDelayedIfNeeded(const TimeTicks& delayed_work_time);
-
- public Q_SLOTS:
   void dispatchDelayed();
 
  private:
   base::MessagePumpForUI& pump;
-  QTimer* mTimer;
+  int timerId;
+
+ protected:
+  void timerEvent(QTimerEvent *event);
 };
 
 // This class implements a MessagePump needed for TYPE_UI MessageLoops on
