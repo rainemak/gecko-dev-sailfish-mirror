@@ -641,8 +641,8 @@ def rust_compile_flags(
     if opt_level == "0" and not debug_rust:
         debug_assertions = False
 
-    if debug_symbols:
-        debug_info = "2"
+    #if debug_symbols:
+    #    debug_info = "2"
 
     opts = []
 
