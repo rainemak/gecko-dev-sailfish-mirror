@@ -256,7 +256,7 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
     Face* face = static_cast<Face*>(facePtrs[0].ToPtr(aList));
     if (face && face->HasValidDescriptor()) {
       aFaceList.AppendElement(face);
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
       if (face->mSize) {
         return true;
       }
@@ -287,7 +287,7 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
     Face* face = static_cast<Face*>(facePtrs[faceIndex].ToPtr(aList));
     if (face && face->HasValidDescriptor()) {
       aFaceList.AppendElement(face);
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
       if (face->mSize) {
         return true;
       }
@@ -312,7 +312,7 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
       face = static_cast<Face*>(facePtrs[order[trial]].ToPtr(aList));
       if (face && face->HasValidDescriptor()) {
         aFaceList.AppendElement(face);
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
         if (face->mSize) {
           return true;
         }
@@ -357,7 +357,7 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
       } else if (distance == minDistance) {
         if (matched) {
           aFaceList.AppendElement(matched);
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
           if (matched->mSize) {
             anyNonScalable = true;
           }
@@ -371,7 +371,7 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
   MOZ_ASSERT(matched, "didn't match a font within a family");
   if (matched) {
     aFaceList.AppendElement(matched);
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
     if (matched->mSize) {
       anyNonScalable = true;
     }
@@ -384,14 +384,14 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
 void Family::FindAllFacesForStyle(FontList* aList, const gfxFontStyle& aStyle,
                                   nsTArray<Face*>& aFaceList,
                                   bool aIgnoreSizeTolerance) const {
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
   bool anyNonScalable =
 #else
   Unused <<
 #endif
       FindAllFacesForStyleInternal(aList, aStyle, aFaceList);
 
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
   // aFaceList now contains whatever faces are the best style match for
   // the requested style. If specifically-sized bitmap faces are supported,
   // we need to additionally filter the list to choose the appropriate size.
