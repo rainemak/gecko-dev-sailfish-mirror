@@ -9,11 +9,11 @@ SOURCES += [
     'MediaKeysEventSourceFactory.cpp',
     'nsAppShell.cpp',
     'nsBidiKeyboard.cpp',
-    'nsIdleServiceQt.cpp',
     'nsLookAndFeel.cpp',
     'nsNativeThemeQt.cpp',
     'nsScreenManagerQt.cpp',
     'nsScreenQt.cpp',
+    'nsUserIdleServiceQt.cpp',
     'nsWidgetFactory.cpp',
     'ProcInfo.cpp',
 ]

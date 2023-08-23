@@ -8,7 +8,7 @@
 #ifdef MOZ_X11
 #include "mozilla/X11Util.h"
 #endif
-#include "nsIdleServiceQt.h"
+#include "nsUserIdleServiceQt.h"
 #include "nsIServiceManager.h"
 #include "nsDebug.h"
 #include "prlink.h"
@@ -29,9 +29,9 @@ static _XScreenSaverQueryInfo_fn _XSSQueryInfo = nullptr;
 static bool sInitialized = false;
 #endif
 
-NS_IMPL_ISUPPORTS_INHERITED0(nsIdleServiceQt, nsIdleService)
+NS_IMPL_ISUPPORTS_INHERITED0(nsUserIdleServiceQt, nsUserIdleService)
 
-nsIdleServiceQt::nsIdleServiceQt()
+nsUserIdleServiceQt::nsUserIdleServiceQt()
 #if defined(MOZ_X11)
     : mXssInfo(nullptr)
 #endif
@@ -43,7 +43,7 @@ static void Initialize()
 {
     sInitialized = true;
 
-    // This will leak - See comments in ~nsIdleServiceQt().
+    // This will leak - See comments in ~nsUserIdleServiceQt().
     PRLibrary* xsslib = PR_LoadLibrary("libXss.so.1");
     if (!xsslib) {
         return;
@@ -58,7 +58,7 @@ static void Initialize()
 }
 #endif
 
-nsIdleServiceQt::~nsIdleServiceQt()
+nsUserIdleServiceQt::~nsUserIdleServiceQt()
 {
 #if defined(MOZ_X11)
     if (mXssInfo)
@@ -77,7 +77,7 @@ nsIdleServiceQt::~nsIdleServiceQt()
 }
 
 bool
-nsIdleServiceQt::PollIdleTime(uint32_t *aIdleTime)
+nsUserIdleServiceQt::PollIdleTime(uint32_t *aIdleTime)
 {
 #if defined(MOZ_X11)
     // Ask xscreensaver about idle time:
@@ -113,7 +113,7 @@ nsIdleServiceQt::PollIdleTime(uint32_t *aIdleTime)
 }
 
 bool
-nsIdleServiceQt::UsePollMode()
+nsUserIdleServiceQt::UsePollMode()
 {
 #if defined(MOZ_X11)
     return false;

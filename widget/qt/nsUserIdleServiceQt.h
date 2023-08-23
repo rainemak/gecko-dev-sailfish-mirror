@@ -5,10 +5,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef nsIdleServiceQt_h__
-#define nsIdleServiceQt_h__
+#ifndef nsUserIdleServiceQt_h__
+#define nsUserIdleServiceQt_h__
 
-#include "nsIdleService.h"
+#include "nsUserIdleService.h"
 
 #if defined(MOZ_X11)
 #include <X11/Xlib.h>
@@ -24,19 +24,19 @@ typedef struct {
 } XScreenSaverInfo;
 #endif
 
-class nsIdleServiceQt : public nsIdleService
+class nsUserIdleServiceQt : public nsUserIdleService
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
 
     bool PollIdleTime(uint32_t* aIdleTime);
 
-    static already_AddRefed<nsIdleServiceQt> GetInstance()
+    static already_AddRefed<nsUserIdleServiceQt> GetInstance()
     {
-        RefPtr<nsIdleServiceQt> idleService =
-            nsIdleService::GetInstance().downcast<nsIdleServiceQt>();
+        RefPtr<nsUserIdleServiceQt> idleService =
+            nsUserIdleService::GetInstance().downcast<nsUserIdleServiceQt>();
         if (!idleService) {
-            idleService = new nsIdleServiceQt();
+            idleService = new nsUserIdleServiceQt();
         }
         
         return idleService.forget();
@@ -48,9 +48,9 @@ private:
 #endif
 
 protected:
-    nsIdleServiceQt();
-    virtual ~nsIdleServiceQt();
+    nsUserIdleServiceQt();
+    virtual ~nsUserIdleServiceQt();
     bool UsePollMode();
 };
 
-#endif // nsIdleServiceQt_h__
+#endif // nsUserIdleServiceQt_h__
