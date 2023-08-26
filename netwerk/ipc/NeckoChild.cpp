@@ -12,7 +12,7 @@
 #include "mozilla/net/HttpChannelChild.h"
 #include "mozilla/net/CookieServiceChild.h"
 #include "mozilla/net/DataChannelChild.h"
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
 #  include "mozilla/net/GIOChannelChild.h"
 #endif
 #include "mozilla/net/FileChannelChild.h"
@@ -127,7 +127,7 @@ bool NeckoChild::DeallocPAltDataOutputStreamChild(
   return true;
 }
 
-#ifdef MOZ_WIDGET_GTK
+#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
 PGIOChannelChild* NeckoChild::AllocPGIOChannelChild(
     PBrowserChild* aBrowser, const SerializedLoadContext& aSerialized,
     const GIOChannelCreationArgs& aOpenArgs) {
