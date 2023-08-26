@@ -35,7 +35,7 @@
 
 #if defined(__aarch64__) && (defined(__linux__) || defined(__android__))
 #   if defined(__linux__)
-#    include <linux/membarrier.h>
+//#    include <linux/membarrier.h>
 #    include <sys/syscall.h>
 #    include <sys/utsname.h>
 #    include <unistd.h>
@@ -47,6 +47,9 @@
 #   endif // __linux__ / ANDROID
 
 #  include "vm/JSContext.h" // TlsContext
+
+#define __NR_membarrier 283
+__SYSCALL(__NR_membarrier, sys_membarrier)
 
 static int membarrier(int cmd, int flags) {
     return syscall(__NR_membarrier, cmd, flags);
