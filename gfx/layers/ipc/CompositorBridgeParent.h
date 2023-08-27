@@ -308,7 +308,7 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(
     CompositorBridgeParentBase::TransformsToSkip)
 
-class CompositorBridgeParent final : public CompositorBridgeParentBase,
+class CompositorBridgeParent : public CompositorBridgeParentBase,
                                      public CompositorController,
                                      public CompositorVsyncSchedulerOwner {
   friend class CompositorThreadHolder;
