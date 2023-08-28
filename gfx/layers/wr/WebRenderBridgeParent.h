@@ -183,6 +183,7 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
   void FinishPendingComposite() override {}
   void CompositeToTarget(VsyncId aId, gfx::DrawTarget* aTarget,
                          const gfx::IntRect* aRect = nullptr) override;
+  virtual void CompositeToDefaultTarget(VsyncId aId) override;
   TimeDuration GetVsyncInterval() const override;
 
   // CompositableParentManager

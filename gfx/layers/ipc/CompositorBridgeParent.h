@@ -740,6 +740,7 @@ class CompositorBridgeParent : public CompositorBridgeParentBase,
   void FinishPendingComposite() override;
   void CompositeToTarget(VsyncId aId, gfx::DrawTarget* aTarget,
                          const gfx::IntRect* aRect = nullptr) override;
+  virtual void CompositeToDefaultTarget(VsyncId aId) override;
 
   RefPtr<Compositor> NewCompositor(
       const nsTArray<LayersBackend>& aBackendHints);

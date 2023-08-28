@@ -874,6 +874,10 @@ void CompositorBridgeParent::SetShadowProperties(Layer* aLayer) {
   });
 }
 
+void CompositorBridgeParent::CompositeToDefaultTarget(VsyncId aId) {
+  CompositeToTarget(aId, nullptr);
+}
+
 void CompositorBridgeParent::CompositeToTarget(VsyncId aId, DrawTarget* aTarget,
                                                const gfx::IntRect* aRect) {
   AUTO_PROFILER_TRACING_MARKER("Paint", "Composite", GRAPHICS);
