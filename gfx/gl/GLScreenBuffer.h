@@ -52,6 +52,7 @@ class SwapChain final {
 
  public:
   UniquePtr<SurfaceFactory> mFactory;
+  bool mPreserve = false;
 
  private:
   std::queue<std::shared_ptr<SharedSurface>> mPool;
@@ -70,6 +71,16 @@ class SwapChain final {
   void ClearPool();
   const auto& FrontBuffer() const { return mFrontBuffer; }
   UniquePtr<SwapChainPresenter> Acquire(const gfx::IntSize&);
+
+  const gfx::IntSize& Size() const;
+  const gfx::IntSize& OffscreenSize() const;
+  bool Resize(const gfx::IntSize & size);
+  bool PublishFrame(const gfx::IntSize& size) { return Swap(size); }
+  void Morph(UniquePtr<SurfaceFactory> newFactory);
+
+private:
+  // Returns false on error or inability to resize.
+  bool Swap(const gfx::IntSize& size);
 };
 
 }  // namespace gl

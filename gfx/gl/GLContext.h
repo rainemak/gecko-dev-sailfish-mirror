@@ -35,6 +35,7 @@
 #include "nsTArray.h"
 #include "GLConsts.h"
 #include "GLDefs.h"
+#include "GLScreenBuffer.h"
 #include "GLTypes.h"
 #include "nsRegionFwd.h"
 #include "nsString.h"
@@ -3493,6 +3494,7 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
   GLBlitHelper* BlitHelper();
   GLBlitTextureImageHelper* BlitTextureImageHelper();
   GLReadTexImageHelper* ReadTexImageHelper();
+  UniquePtr<SwapChain> mSwapChain;
 
   // Assumes shares are created by all sharing with the same global context.
   bool SharesWith(const GLContext* other) const {
@@ -3537,9 +3539,13 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
 
   bool IsOffscreen() const { return mDesc.isOffscreen; }
 
+  SwapChain* GetSwapChain() const { return mSwapChain.get(); }
+
   bool WorkAroundDriverBugs() const { return mWorkAroundDriverBugs; }
 
   bool IsOffscreenSizeAllowed(const gfx::IntSize& aSize) const;
+
+  bool ResizeScreenBuffer(const gfx::IntSize& size);
 
   virtual bool Init();
 

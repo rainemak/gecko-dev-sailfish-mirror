@@ -116,4 +116,38 @@ SwapChain::~SwapChain() {
   }
 }
 
+void SwapChain::Morph(UniquePtr<SurfaceFactory> newFactory) {
+  MOZ_RELEASE_ASSERT(newFactory, "newFactory must not be null");
+  mFactory = std::move(newFactory);
+}
+
+const gfx::IntSize& SwapChain::Size() const {
+  return mFrontBuffer->mFb->mSize;
+}
+
+const gfx::IntSize& SwapChain::OffscreenSize() const {
+  return mPresenter->mBackBuffer->mFb->mSize;
+}
+
+bool SwapChain::Resize(const gfx::IntSize& size) {
+  UniquePtr<SharedSurface> newBack =
+      mFactory->CreateShared(size);
+  if (!newBack) return false;
+
+  if (mPresenter->mBackBuffer) mPresenter->mBackBuffer->ProducerRelease();
+
+  mPresenter->mBackBuffer.reset(newBack.release());
+
+  mPresenter->mBackBuffer->ProducerAcquire();
+
+  return true;
+}
+
+bool SwapChain::Swap(const gfx::IntSize& size) {
+  mFrontBuffer = mPresenter->SwapBackBuffer(mFrontBuffer);
+
+  return true;
+}
+
+
 }  // namespace mozilla::gl
