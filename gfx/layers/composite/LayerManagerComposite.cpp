@@ -181,7 +181,9 @@ LayerManagerComposite::~LayerManagerComposite() { Destroy(); }
 
 void LayerManagerComposite::Destroy() {
   if (!mDestroyed) {
-    mCompositor->GetWidget()->CleanupWindowEffects();
+    if (mCompositor->GetWidget()) {
+      mCompositor->GetWidget()->CleanupWindowEffects();
+    }
     if (mRoot) {
       RootLayer()->Destroy();
     }
