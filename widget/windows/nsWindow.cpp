@@ -3802,6 +3802,8 @@ void* nsWindow::GetNativeData(uint32_t aDataType) {
     case NS_NATIVE_WINDOW:
     case NS_NATIVE_WINDOW_WEBRTC_DEVICE_ID:
       return (void*)mWnd;
+    case NS_NATIVE_SHAREABLE_WINDOW:
+      return (void*)WinUtils::GetTopLevelHWND(mWnd);
     case NS_NATIVE_GRAPHIC:
       MOZ_ASSERT_UNREACHABLE("Not supported on Windows:");
       return nullptr;
@@ -3825,7 +3827,16 @@ void* nsWindow::GetNativeData(uint32_t aDataType) {
 }
 
 void nsWindow::SetNativeData(uint32_t aDataType, uintptr_t aVal) {
-  NS_ERROR("SetNativeData called with unsupported data type.");
+  switch (aDataType) {
+    case NS_NATIVE_CHILD_WINDOW:
+    case NS_NATIVE_CHILD_OF_SHAREABLE_WINDOW: {
+      MOZ_ASSERT_UNREACHABLE(
+          "SetNativeData window origin was not a plugin process.");
+      break;
+    }
+    default:
+      NS_ERROR("SetNativeData called with unsupported data type.");
+  }
 }
 
 // Free some native data according to aDataType

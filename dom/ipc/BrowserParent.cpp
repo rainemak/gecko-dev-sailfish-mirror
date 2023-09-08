@@ -156,6 +156,7 @@ using namespace mozilla::widget;
 using namespace mozilla::gfx;
 
 using mozilla::LazyLogModule;
+using mozilla::StaticAutoPtr;
 using mozilla::Unused;
 
 LazyLogModule gBrowserFocusLog("BrowserFocus");
@@ -538,6 +539,17 @@ void BrowserParent::SetOwnerElement(Element* aElement) {
 
   AddWindowListeners();
   TryCacheDPIAndScale();
+
+  // Try to send down WidgetNativeData, now that this BrowserParent is
+  // associated with a widget.
+  nsCOMPtr<nsIWidget> widget = GetTopLevelWidget();
+  if (widget) {
+    WindowsHandle widgetNativeData = reinterpret_cast<WindowsHandle>(
+        widget->GetNativeData(NS_NATIVE_SHAREABLE_WINDOW));
+    if (widgetNativeData) {
+      Unused << SendSetWidgetNativeData(widgetNativeData);
+    }
+  }
 
   if (mRemoteLayerTreeOwner.IsInitialized()) {
     mRemoteLayerTreeOwner.OwnerContentChanged();
@@ -3202,6 +3214,23 @@ mozilla::ipc::IPCResult BrowserParent::RecvSetInputContext(
     const InputContext& aContext, const InputContextAction& aAction) {
   IMEStateManager::SetInputContextForChildProcess(this, aContext, aAction);
   return IPC_OK();
+}
+
+mozilla::ipc::IPCResult BrowserParent::RecvSetNativeChildOfShareableWindow(
+    const uintptr_t& aChildWindow) {
+#if defined(XP_WIN)
+  nsCOMPtr<nsIWidget> widget = GetTopLevelWidget();
+  if (widget) {
+    // Note that this call will probably cause a sync native message to the
+    // process that owns the child window.
+    widget->SetNativeData(NS_NATIVE_CHILD_OF_SHAREABLE_WINDOW, aChildWindow);
+  }
+  return IPC_OK();
+#else
+  MOZ_ASSERT_UNREACHABLE(
+      "BrowserParent::RecvSetNativeChildOfShareableWindow not implemented!");
+  return IPC_FAIL_NO_REASON(this);
+#endif
 }
 
 mozilla::ipc::IPCResult BrowserParent::RecvDispatchFocusToTopLevelWindow() {

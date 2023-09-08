@@ -395,6 +395,9 @@ class BrowserParent final : public PBrowserParent,
 
   mozilla::ipc::IPCResult RecvHideTooltip();
 
+  mozilla::ipc::IPCResult RecvSetNativeChildOfShareableWindow(
+      const uintptr_t& childWindow);
+
   mozilla::ipc::IPCResult RecvDispatchFocusToTopLevelWindow();
 
   mozilla::ipc::IPCResult RecvRespondStartSwipeEvent(

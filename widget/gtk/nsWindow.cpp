@@ -2951,6 +2951,8 @@ void* nsWindow::GetNativeData(uint32_t aDataType) {
   switch (aDataType) {
     case NS_NATIVE_WINDOW:
     case NS_NATIVE_WIDGET: {
+      if (!mGdkWindow) return nullptr;
+
       return mGdkWindow;
     }
 
@@ -2969,11 +2971,14 @@ void* nsWindow::GetNativeData(uint32_t aDataType) {
       return GetToplevelWidget();
 
     case NS_NATIVE_WINDOW_WEBRTC_DEVICE_ID:
+    case NS_NATIVE_SHAREABLE_WINDOW:
       if (GdkIsX11Display()) {
         return (void*)GDK_WINDOW_XID(gdk_window_get_toplevel(mGdkWindow));
       }
       NS_WARNING(
-          "nsWindow::GetNativeData(): NS_NATIVE_WINDOW_WEBRTC_DEVICE_ID is not "
+          "nsWindow::GetNativeData(): "
+          "NS_NATIVE_SHAREABLE_WINDOW / NS_NATIVE_WINDOW_WEBRTC_DEVICE_ID is "
+          "not "
           "handled on Wayland!");
       return nullptr;
     case NS_RAW_NATIVE_IME_CONTEXT: {
