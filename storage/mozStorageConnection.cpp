@@ -878,7 +878,7 @@ nsresult Connection::initializeInternal() {
   }
 
 #if defined(MOZ_MEMORY_TEMP_STORE_PRAGMA)
-  (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING("PRAGMA temp_store = 2;"));
+  (void)ExecuteSimpleSQL("PRAGMA temp_store = 2;"_ns);
 #endif
 
   // Register our built-in SQL functions.
