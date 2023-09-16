@@ -43,6 +43,18 @@ class GL_CONTEXT_PROVIDER_NAME {
       mozilla::widget::CompositorWidget* aCompositorWidget,
       bool aHardwareWebRender, bool aForceAccelerated);
 
+  /**
+   * Create wrapping Gecko GLContext for external gl context.
+   *
+   * @param aContext External context which will be wrapped by Gecko GLContext.
+   * @param aSurface External surface which is used for external context.
+   *
+   * @return Wrapping Context to use for rendering
+   */
+  static already_AddRefed<GLContext> CreateWrappingExisting(void* aContext,
+                                                            void* aSurface,
+                                                            void* aDisplay);
+
   /// Just create a context. We'll add offscreen stuff ourselves.
   static already_AddRefed<GLContext> CreateHeadless(
       const GLContextCreateDesc&, nsACString* const out_failureId);

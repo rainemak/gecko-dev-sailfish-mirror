@@ -995,6 +995,36 @@ static bool CreateConfigScreen(EglDisplay& egl, EGLConfig* const aConfig,
   return false;
 }
 
+already_AddRefed<GLContext> GLContextProviderEGL::CreateWrappingExisting(
+    void* aContext, void* aSurface, void* aDisplay) {
+  if (!aContext || !aSurface) return nullptr;
+
+  nsCString failureId;
+  const auto lib = gl::DefaultEglLibrary(&failureId);
+  if (!lib) {
+    gfxCriticalNote << "Failed[3] to load EGL library: " << failureId.get();
+    return nullptr;
+  }
+  const auto egl = EglDisplay::Create(*lib.operator->(), (EGLContext)aDisplay, false);
+  if (!egl) {
+    gfxCriticalNote << "Failed[3] to create EGL library  display: "
+                    << failureId.get();
+    return nullptr;
+  }
+
+  CreateContextFlags flags = CreateContextFlags::NONE;
+  const auto desc = GLContextDesc{{flags}, false};
+
+  EGLConfig config = EGL_NO_CONFIG;
+  RefPtr<GLContextEGL> gl =
+      new GLContextEGL(egl, desc, config,
+                       (EGLSurface)aSurface, (EGLContext)aContext);
+  gl->SetIsDoubleBuffered(true);
+  gl->mOwnsContext = false;
+
+  return gl.forget();
+}
+
 already_AddRefed<GLContext> GLContextProviderEGL::CreateForCompositorWidget(
     CompositorWidget* aCompositorWidget, bool aHardwareWebRender,
     bool /*aForceAccelerated*/) {
