@@ -32,10 +32,10 @@
 #  undef CompareString
 #endif
 
+#include "nsIPromptService.h"
+
 namespace mozilla {
 namespace storage {
-
-#include "nsIPromptService.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Memory Reporting
