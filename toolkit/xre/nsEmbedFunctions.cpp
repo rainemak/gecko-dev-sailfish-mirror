@@ -72,6 +72,7 @@
 
 #include "mozilla/dom/ContentProcess.h"
 #include "mozilla/dom/ContentParent.h"
+#include "EmbedLiteContentProcess.h"
 
 #include "mozilla/ipc/TestShellParent.h"
 #if defined(XP_WIN)
@@ -251,6 +252,7 @@ const char* XRE_ChildProcessTypeToAnnotation(GeckoProcessType aProcessType) {
 
 namespace mozilla::startup {
 GeckoProcessType sChildProcessType = GeckoProcessType_Default;
+bool sIsEmbedlite = false;
 }  // namespace mozilla::startup
 
 #if defined(MOZ_WIDGET_ANDROID)
@@ -667,10 +669,37 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
           MOZ_CRASH("This makes no sense");
           break;
 
-        case GeckoProcessType_Content:
-          ioInterposerGuard.emplace();
-          process = MakeUnique<ContentProcess>(parentPID);
-          break;
+        case GeckoProcessType_Content: {
+          // If passed in grab the application path for xpcom init
+          bool foundAppdir = false;
+          nsCString appDir;
+
+          for (int idx = aArgc; idx > 0; idx--) {
+            if (aArgv[idx] && !strcmp(aArgv[idx], "-embedlite")) {
+              startup::sIsEmbedlite = true;
+              continue;
+            }
+
+            if (aArgv[idx] && !strcmp(aArgv[idx], "-appdir")) {
+              MOZ_ASSERT(!foundAppdir);
+              if (foundAppdir) {
+                continue;
+              }
+              appDir.Assign(nsDependentCString(aArgv[idx+1]));
+              foundAppdir = true;
+            }
+          }
+
+          if (startup::sIsEmbedlite) {
+            // Embedlite process does not have shared content parent process with Gecko stuff, so these child should behave as normal Gecko default process
+            sChildProcessType = GeckoProcessType_Default;
+            process = MakeUnique<mozilla::embedlite::EmbedLiteContentProcess>(parentPID);
+            static_cast<mozilla::embedlite::EmbedLiteContentProcess*>(process.get())->SetAppDir(appDir);
+          } else {
+            process = MakeUnique<ContentProcess>(parentPID);
+          }
+        }
+        break;
 
         case GeckoProcessType_IPDLUnitTest:
 #ifdef MOZ_IPDL_TESTS
