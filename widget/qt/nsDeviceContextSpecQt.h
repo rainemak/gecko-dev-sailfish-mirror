@@ -9,7 +9,6 @@
 
 #include "nsIDeviceContextSpec.h"
 #include "nsIPrintSettings.h"
-#include "nsIPrinterEnumerator.h"
 #include "nsCOMPtr.h"
 
 #include "nsString.h"
@@ -44,17 +43,6 @@ protected:
     char   mPrinter[256];       /* Printer name */
     nsCString         mSpoolName;
     nsCOMPtr<nsIFile> mSpoolFile;
-};
-
-class nsPrinterEnumeratorQt : public nsIPrinterEnumerator {
-public:
-    nsPrinterEnumeratorQt();
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIPRINTERENUMERATOR
-
-protected:
-    virtual ~nsPrinterEnumeratorQt();
-
 };
 
 #endif /* !nsDeviceContextSpecQt_h___ */
