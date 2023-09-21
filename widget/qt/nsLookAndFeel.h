@@ -28,15 +28,14 @@ public:
 
     void NativeInit() final;
 
-    virtual bool GetFontImpl(FontID aID, nsString& aName, gfxFontStyle& aStyle) override;
-    virtual nsresult GetIntImpl(IntID aID, int32_t &aResult) override;
-    virtual nsresult GetFloatImpl(FloatID aID, float &aResult) override;
+    virtual nsresult NativeGetInt(IntID aID, int32_t& aResult) override;
+    virtual nsresult NativeGetFloat(FloatID aID, float& aResult) override;
+    virtual nsresult NativeGetColor(ColorID, ColorScheme, nscolor& aResult) override;
+    virtual bool NativeGetFont(FontID aID, nsString& aName, gfxFontStyle& aStyle) override;
+
     virtual bool GetEchoPasswordImpl() override;
     virtual uint32_t GetPasswordMaskDelayImpl() override;
     virtual char16_t GetPasswordCharacterImpl() override;
-
-protected:
-    virtual nsresult NativeGetColor(ColorID aID, nscolor &aColor) override;
 
 private:
     RefPtr<Observer> mObserver;
