@@ -21,14 +21,6 @@ public:
 
     nsPrintSettingsQt();
 
-    NS_IMETHOD GetPrintRange(int16_t* aPrintRange) override;
-    NS_IMETHOD SetPrintRange(int16_t aPrintRange) override;
-
-    NS_IMETHOD GetStartPageRange(int32_t* aStartPageRange) override;
-    NS_IMETHOD SetStartPageRange(int32_t aStartPageRange) override;
-    NS_IMETHOD GetEndPageRange(int32_t* aEndPageRange) override;
-    NS_IMETHOD SetEndPageRange(int32_t aEndPageRange) override;
-
     NS_IMETHOD GetPrintReversed(bool* aPrintReversed) override;
     NS_IMETHOD SetPrintReversed(bool aPrintReversed) override;
 
@@ -50,8 +42,8 @@ public:
     NS_IMETHOD GetScaling(double* aScaling) override;
     NS_IMETHOD SetScaling(double aScaling) override;
 
-    NS_IMETHOD GetPaperName(nsAString &aPaperName) override;
-    NS_IMETHOD SetPaperName(const nsAString &aPaperName) override;
+    NS_IMETHOD GetPaperId(nsAString& aPaperId) override;
+    NS_IMETHOD SetPaperId(const nsAString& aPaperId) override;
 
     NS_IMETHOD SetUnwriteableMarginInTwips(nsIntMargin& aUnwriteableMargin) override;
     NS_IMETHOD SetUnwriteableMarginTop(double aUnwriteableMarginTop) override;
@@ -69,6 +61,19 @@ public:
 
     NS_IMETHOD GetEffectivePageSize(double* aWidth, double* aHeight) override;
 
+    NS_IMETHOD SetupSilentPrinting() override;
+
+    NS_IMETHOD SetPageRanges(const nsTArray<int32_t>&) override;
+    NS_IMETHOD GetPageRanges(nsTArray<int32_t>&) override;
+
+    NS_IMETHOD GetResolution(int32_t* aResolution) override;
+    NS_IMETHOD SetResolution(int32_t aResolution) override;
+
+    NS_IMETHOD GetDuplex(int32_t* aDuplex) override;
+    NS_IMETHOD SetDuplex(int32_t aDuplex) override;
+
+    NS_IMETHOD GetOutputFormat(int16_t* aOutputFormat) override;
+
 protected:
     virtual ~nsPrintSettingsQt();
 
@@ -82,11 +87,12 @@ protected:
     QString mFilename;
     QString mPrinterName;
     int32_t mNumCopies = 1;
-    int32_t mStartPageRange = 0;
-    int32_t mEndPageRange = 0;
-    int16_t mPrintRange = 0;
     bool mPrintInColor = true;
     bool mPrintReversed = false;
+    nsTArray<int32_t> mPageRanges;
+    int32_t mResolution = 0;
+    int32_t mDuplex = 0;
+    int16_t mOutputFormat = kOutputFormatNative;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsPrintSettingsQt, NS_PRINTSETTINGSQT_IID)

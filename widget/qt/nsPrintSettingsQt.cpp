@@ -34,7 +34,11 @@ nsPrintSettingsQt::nsPrintSettingsQt(const nsPrintSettingsQt& aPS):
     mEndPageRange(aPS.mEndPageRange),
     mPrintRange(aPS.mPrintRange),
     mPrintInColor(aPS.mPrintInColor),
-    mPrintReversed(aPS.mPrintReversed)
+    mPrintReversed(aPS.mPrintReversed),
+    mPageRanges(aPS.mPageRanges.Clone()),
+    mResolution(aPS.mResolution),
+    mDuplex(aPS.mDuplex),
+    mOutputFormat(aPS.mOutputFormat)
 {
 }
 
@@ -55,6 +59,11 @@ nsPrintSettingsQt::operator=(const nsPrintSettingsQt& rhs)
     mPrintRange = rhs.mPrintRange;
     mPrintInColor = rhs.mPrintInColor;
     mPrintReversed = rhs.mPrintReversed;
+    mPageRanges = rhs.mPageRanges.Clone();
+    mResolution = rhs.mResolution;
+    mDuplex = rhs.mDuplex;
+    mOutputFormat = rhs.mOutputFormat;
+
     return *this;
 }
 
@@ -80,55 +89,20 @@ nsPrintSettingsQt::_Assign(nsIPrintSettings* aPS)
 }
 
 NS_IMETHODIMP
-nsPrintSettingsQt::GetPrintRange(int16_t* aPrintRange)
+nsPrintSettingsQt::SetPageRanges(const nsTArray<int32_t>&)
 {
-    NS_ENSURE_ARG_POINTER(aPrintRange);
-    *aPrintRange = mPrintRange;
-    return NS_OK;
-}
-
-NS_IMETHODIMP 
-nsPrintSettingsQt::SetPrintRange(int16_t aPrintRange)
-{
-    mPrintRange = aPrintRange;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-nsPrintSettingsQt::GetStartPageRange(int32_t* aStartPageRange)
-{
-    NS_ENSURE_ARG_POINTER(aStartPageRange);
-    *aStartPageRange = mStartPageRange;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-nsPrintSettingsQt::SetStartPageRange(int32_t aStartPageRange)
-{
-    mStartPageRange = aStartPageRange;
-    if (mStartPageRange > mEndPageRange) {
-        qWarning() << "nsPrintSettingsQt::SetStartPageRange: 'StartPageRange' must be less than or equal to 'EndPageRange'";
-        mEndPageRange = mStartPageRange;
+    if (aRanges.Length() % 2 != 0) {
+        return NS_ERROR_FAILURE;
     }
+    mPageRanges = aPages.Clone();
     return NS_OK;
 }
 
-NS_IMETHODIMP
-nsPrintSettingsQt::GetEndPageRange(int32_t* aEndPageRange)
-{
-    NS_ENSURE_ARG_POINTER(aEndPageRange);
-    *aEndPageRange = mEndPageRange;
-    return NS_OK;
-}
 
 NS_IMETHODIMP
-nsPrintSettingsQt::SetEndPageRange(int32_t aEndPageRange)
+nsPrintSettingsQt::GetPageRanges(nsTArray<int32_t>&)
 {
-    mEndPageRange = aEndPageRange;
-    if (mStartPageRange > mEndPageRange) {
-        qWarning() << "nsPrintSettingsQt::SetEndPageRange: 'EndPageRange' must be more than or equal to 'mStartPageRange'";
-        mStartPageRange = mEndPageRange;
-    }
+    aPages = mPageRanges.Clone();
     return NS_OK;
 }
 
@@ -256,10 +230,10 @@ nsPrintSettingsQt::SetScaling(double aScaling)
 }
 
 static const char* const indexToPaperName[] =
-{ "A4", "B5", "Letter", "Legal", "Executive",
-  "A0", "A1", "A2", "A3", "A5", "A6", "A7", "A8", "A9",
-  "B0", "B1", "B10", "B2", "B3", "B4", "B6", "B7", "B8", "B9",
-  "C5E", "Comm10E", "DLE", "Folio", "Ledger", "Tabloid"
+{ "a4", "b5", "letter", "legal", "executive",
+  "a0", "a1", "a2", "a3", "a5", "a6", "a7", "a8", "a9",
+  "b0", "b1", "b10", "b2", "b3", "b4", "b6", "b7", "b8", "b9",
+  "c5e", "comm10e", "dle", "folio", "ledger", "tabloid"
 };
 
 static const QPageSize::PageSizeId indexToQtPaperEnum[] =
@@ -274,7 +248,7 @@ static const QPageSize::PageSizeId indexToQtPaperEnum[] =
 };
 
 NS_IMETHODIMP
-nsPrintSettingsQt::GetPaperName(nsAString &aPaperName)
+nsPrintSettingsQt::GetPaperId(nsAString &aPaperName)
 {
     QPageSize::PageSizeId size = mPageLayout->pageSize().id();
     QString name(indexToPaperName[size]);
@@ -283,10 +257,11 @@ nsPrintSettingsQt::GetPaperName(nsAString &aPaperName)
 }
 
 NS_IMETHODIMP
-nsPrintSettingsQt::SetPaperName(const nsAString &aPaperName)
+nsPrintSettingsQt::SetPaperId(const nsAString &aPaperName)
 {
     NS_ConvertUTF16toUTF8 paperName(aPaperName);
     QString ref(paperName.get());
+    ref = ref.toLower();
     for (uint32_t i = 0; i < sizeof(indexToPaperName)/sizeof(char*); i++)
     {
         if (ref == QString(indexToPaperName[i])) {
@@ -409,3 +384,37 @@ nsPrintSettingsQt::GetEffectivePageSize(double* aWidth, double* aHeight)
     return NS_OK;
 }
 
+NS_IMETHODIMP
+nsPrintSettingsQt::SetupSilentPrinting() {
+    return NS_OK;
+}
+
+NS_IMETHODIMP nsPrintSettingsQt::GetResolution(int32_t* aResolution) {
+    NS_ENSURE_ARG_POINTER(aResolution);
+    *aResolution = mResolution;
+    return NS_OK;
+}
+NS_IMETHODIMP nsPrintSettingsQt::SetResolution(const int32_t aResolution) {
+    mResolution = aResolution;
+    return NS_OK;
+}
+
+NS_IMETHODIMP nsPrintSettingsQt::GetDuplex(int32_t* aDuplex) {
+    NS_ENSURE_ARG_POINTER(aDuplex);
+    *aDuplex = mDuplex;
+    return NS_OK;
+}
+NS_IMETHODIMP nsPrintSettingsQt::SetDuplex(const int32_t aDuplex) {
+    mDuplex = aDuplex;
+    return NS_OK;
+}
+
+NS_IMETHODIMP nsPrintSettingsQt::GetOutputFormat(int16_t* aOutputFormat) {
+    NS_ENSURE_ARG_POINTER(aOutputFormat);
+    *aOutputFormat = mOutputFormat;
+    return NS_OK;
+}
+NS_IMETHODIMP nsPrintSettingsQt::SetOutputFormat(int16_t aOutputFormat) {
+    mOutputFormat = aOutputFormat;
+    return NS_OK;
+}
