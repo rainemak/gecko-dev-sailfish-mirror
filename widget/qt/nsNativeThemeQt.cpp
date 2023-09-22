@@ -9,6 +9,7 @@
 #include "QtColors.h"
 #include "nsCSSRendering.h"
 #include "PathHelpers.h"
+#include "nsLayoutUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/StaticPrefs_widget.h"
 #include "nsNativeBasicTheme.h"
@@ -22,6 +23,9 @@ static const Float STROKE_WIDTH = Float(4.0f);
 static const Float RECT_RADII = Float(2.0f);
 static const int32_t RADIO_CHECK_DEFLATION = 3;
 static const int32_t RADIO_BORDER_DEFLATION = 2;
+static const CSSIntCoord SCROLL_BAR_SIZE = 17;
+
+
 
 static void ClampRectAndMoveToCenter(nsRect& aRect) {
   if (aRect.width < aRect.height) {
@@ -165,16 +169,15 @@ static void PaintCheckedRadioButton(nsIFrame* aFrame, DrawTarget* aDrawTarget,
 }
 
 NS_IMETHODIMP
-nsNativeThemeQt::DrawWidgetBackground(gfxContext* aContext,
-                                           nsIFrame* aFrame,
-                                           StyleAppearance aAppearance,
-                                           const nsRect& aRect,
-                                           const nsRect& aDirtyRect) {
-  EventStates eventState = GetContentState(aFrame, aAppearance);
+nsNativeThemeQt::DrawWidgetBackground(gfxContext* aContext, nsIFrame* aFrame,
+                                      StyleAppearance aWidgetType,
+                                      const nsRect& aRect, const nsRect& aDirtyRect,
+                                      DrawOverflow) {
+  EventStates eventState = GetContentState(aFrame, aWidgetType);
   nsRect rect(aRect);
   ClampRectAndMoveToCenter(rect);
 
-  switch (aAppearance) {
+  switch (aWidgetType) {
     case StyleAppearance::Radio:
       PaintRadioControl(aFrame, aContext->GetDrawTarget(), rect, eventState);
       if (IsSelected(aFrame)) {
@@ -198,16 +201,23 @@ nsNativeThemeQt::DrawWidgetBackground(gfxContext* aContext,
   return NS_OK;
 }
 
+auto nsNativeThemeQt::GetScrollbarSizes(nsPresContext* aPresContext,
+                                        StyleScrollbarWidth aWidth,
+                                        Overlay aOverlay) -> ScrollbarSizes {
+  int32_t size = aPresContext->CSSPixelsToDevPixels(SCROLL_BAR_SIZE);
+  return {size, size};
+}
+
 LayoutDeviceIntMargin nsNativeThemeQt::GetWidgetBorder(
-    nsDeviceContext* aContext, nsIFrame* aFrame, StyleAppearance aAppearance) {
+    nsDeviceContext* aContext, nsIFrame* aFrame, StyleAppearance aWidgetType) {
   return LayoutDeviceIntMargin();
 }
 
 bool nsNativeThemeQt::GetWidgetPadding(nsDeviceContext* aContext,
                                             nsIFrame* aFrame,
-                                            StyleAppearance aAppearance,
+                                            StyleAppearance aWidgetType,
                                             LayoutDeviceIntMargin* aResult) {
-  switch (aAppearance) {
+  switch (aWidgetType) {
     // Radios and checkboxes return a fixed size in GetMinimumWidgetSize
     // and have a meaningful baseline, so they can't have
     // author-specified padding.
@@ -222,7 +232,7 @@ bool nsNativeThemeQt::GetWidgetPadding(nsDeviceContext* aContext,
 
 bool nsNativeThemeQt::GetWidgetOverflow(nsDeviceContext* aContext,
                                              nsIFrame* aFrame,
-                                             StyleAppearance aAppearance,
+                                             StyleAppearance aWidgetType,
                                              nsRect* aOverflowRect) {
   return false;
 }
@@ -230,11 +240,11 @@ bool nsNativeThemeQt::GetWidgetOverflow(nsDeviceContext* aContext,
 NS_IMETHODIMP
 nsNativeThemeQt::GetMinimumWidgetSize(nsPresContext* aPresContext,
                                            nsIFrame* aFrame,
-                                           StyleAppearance aAppearance,
+                                           StyleAppearance aWidgetType,
                                            LayoutDeviceIntSize* aResult,
                                            bool* aIsOverridable) {
-  if (aAppearance == StyleAppearance::Radio ||
-      aAppearance == StyleAppearance::Checkbox) {
+  if (aWidgetType == StyleAppearance::Radio ||
+      aWidgetType == StyleAppearance::Checkbox) {
     // 9px + (1px padding + 1px border) * 2
     aResult->width = aPresContext->CSSPixelsToDevPixels(13);
     aResult->height = aPresContext->CSSPixelsToDevPixels(13);
@@ -245,12 +255,12 @@ nsNativeThemeQt::GetMinimumWidgetSize(nsPresContext* aPresContext,
 
 NS_IMETHODIMP
 nsNativeThemeQt::WidgetStateChanged(nsIFrame* aFrame,
-                                         StyleAppearance aAppearance,
+                                         StyleAppearance aWidgetType,
                                          nsAtom* aAttribute,
                                          bool* aShouldRepaint,
                                          const nsAttrValue* aOldValue) {
-  if (aAppearance == StyleAppearance::Radio ||
-      aAppearance == StyleAppearance::Checkbox) {
+  if (aWidgetType == StyleAppearance::Radio ||
+      aWidgetType == StyleAppearance::Checkbox) {
     if (aAttribute == nsGkAtoms::active || aAttribute == nsGkAtoms::disabled ||
         aAttribute == nsGkAtoms::hover) {
       *aShouldRepaint = true;
@@ -268,8 +278,8 @@ nsNativeThemeQt::ThemeChanged() { return NS_OK; }
 NS_IMETHODIMP_(bool)
 nsNativeThemeQt::ThemeSupportsWidget(nsPresContext* aPresContext,
                                           nsIFrame* aFrame,
-                                          StyleAppearance aAppearance) {
-  switch (aAppearance) {
+                                          StyleAppearance aWidgetType) {
+  switch (aWidgetType) {
     case StyleAppearance::Radio:
     case StyleAppearance::Checkbox:
       return true;
@@ -279,19 +289,19 @@ nsNativeThemeQt::ThemeSupportsWidget(nsPresContext* aPresContext,
 }
 
 NS_IMETHODIMP_(bool)
-nsNativeThemeQt::WidgetIsContainer(StyleAppearance aAppearance) {
+nsNativeThemeQt::WidgetIsContainer(StyleAppearance aWidgetType) {
   return false;
 }
 
 bool nsNativeThemeQt::ThemeDrawsFocusForWidget(
-    StyleAppearance aAppearance) {
+    StyleAppearance aWidgetType) {
   return false;
 }
 
 bool nsNativeThemeQt::ThemeNeedsComboboxDropmarker() { return false; }
 
 nsITheme::Transparency nsNativeThemeQt::GetWidgetTransparency(
-    nsIFrame* aFrame, StyleAppearance aAppearance) {
+    nsIFrame* aFrame, StyleAppearance aWidgetType) {
   return eUnknownTransparency;
 }
 
@@ -299,11 +309,7 @@ already_AddRefed<nsITheme> do_GetNativeThemeDoNotUseDirectly() {
   static nsCOMPtr<nsITheme> inst;
 
   if (!inst) {
-    if (StaticPrefs::widget_disable_native_theme_for_content()) {
-      inst = new nsNativeBasicTheme();
-    } else {
-      inst = new nsNativeThemeQt();
-    }
+    inst = new nsNativeThemeQt();
     ClearOnShutdown(&inst);
   }
 

@@ -14,20 +14,23 @@ class nsNativeThemeQt final : private nsNativeTheme, public nsITheme {
 
   // The nsITheme interface.
   NS_IMETHOD DrawWidgetBackground(gfxContext* aContext, nsIFrame* aFrame,
-                                  StyleAppearance aAppearance,
-                                  const nsRect& aRect,
-                                  const nsRect& aDirtyRect) override;
+                                  StyleAppearance aWidgetType,
+                                  const nsRect& aRect, const nsRect& aDirtyRect,
+                                  DrawOverflow = DrawOverflow::Yes) override;
+
+  ScrollbarSizes GetScrollbarSizes(nsPresContext*, StyleScrollbarWidth,
+                                   Overlay) override;
 
   [[nodiscard]] LayoutDeviceIntMargin GetWidgetBorder(
       nsDeviceContext* aContext, nsIFrame* aFrame,
-      StyleAppearance aAppearance) override;
+      StyleAppearance aWidgetType) override;
 
   bool GetWidgetPadding(nsDeviceContext* aContext, nsIFrame* aFrame,
-                        StyleAppearance aAppearance,
+                        StyleAppearance aWidgetType,
                         LayoutDeviceIntMargin* aResult) override;
 
   bool GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFrame,
-                         StyleAppearance aAppearance,
+                         StyleAppearance aWidgetType,
                          nsRect* aOverflowRect) override;
 
   NS_IMETHOD GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aFrame,
@@ -35,7 +38,7 @@ class nsNativeThemeQt final : private nsNativeTheme, public nsITheme {
                                   mozilla::LayoutDeviceIntSize* aResult,
                                   bool* aIsOverridable) override;
 
-  NS_IMETHOD WidgetStateChanged(nsIFrame* aFrame, StyleAppearance aAppearance,
+  NS_IMETHOD WidgetStateChanged(nsIFrame* aFrame, StyleAppearance aWidgetType,
                                 nsAtom* aAttribute, bool* aShouldRepaint,
                                 const nsAttrValue* aOldValue) override;
 
@@ -43,17 +46,17 @@ class nsNativeThemeQt final : private nsNativeTheme, public nsITheme {
 
   NS_IMETHOD_(bool)
   ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* aFrame,
-                      StyleAppearance aAppearance) override;
+                      StyleAppearance aWidgetType) override;
 
-  NS_IMETHOD_(bool) WidgetIsContainer(StyleAppearance aAppearance) override;
+  NS_IMETHOD_(bool) WidgetIsContainer(StyleAppearance aWidgetType) override;
 
   NS_IMETHOD_(bool)
-  ThemeDrawsFocusForWidget(StyleAppearance aAppearance) override;
+  ThemeDrawsFocusForWidget(StyleAppearance aWidgetType) override;
 
   bool ThemeNeedsComboboxDropmarker() override;
 
   Transparency GetWidgetTransparency(nsIFrame* aFrame,
-                                     StyleAppearance aAppearance) override;
+                                     StyleAppearance aWidgetType) override;
 
   nsNativeThemeQt() {}
 
