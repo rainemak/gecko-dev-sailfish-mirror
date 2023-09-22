@@ -73,6 +73,8 @@ public:
     NS_IMETHOD SetDuplex(int32_t aDuplex) override;
 
     NS_IMETHOD GetOutputFormat(int16_t* aOutputFormat) override;
+    NS_IMETHODIMP SetOutputFormat(int16_t aOutputFormat) override;
+
 
 protected:
     virtual ~nsPrintSettingsQt();

@@ -30,9 +30,6 @@ nsPrintSettingsQt::nsPrintSettingsQt(const nsPrintSettingsQt& aPS):
     mFilename(aPS.mFilename),
     mPrinterName(aPS.mPrinterName),
     mNumCopies(aPS.mNumCopies),
-    mStartPageRange(aPS.mStartPageRange),
-    mEndPageRange(aPS.mEndPageRange),
-    mPrintRange(aPS.mPrintRange),
     mPrintInColor(aPS.mPrintInColor),
     mPrintReversed(aPS.mPrintReversed),
     mPageRanges(aPS.mPageRanges.Clone()),
@@ -54,9 +51,6 @@ nsPrintSettingsQt::operator=(const nsPrintSettingsQt& rhs)
     mFilename = rhs.mFilename;
     mPrinterName = rhs.mPrinterName;
     mNumCopies = rhs.mNumCopies;
-    mStartPageRange = rhs.mStartPageRange;
-    mEndPageRange = rhs.mEndPageRange;
-    mPrintRange = rhs.mPrintRange;
     mPrintInColor = rhs.mPrintInColor;
     mPrintReversed = rhs.mPrintReversed;
     mPageRanges = rhs.mPageRanges.Clone();
@@ -89,20 +83,20 @@ nsPrintSettingsQt::_Assign(nsIPrintSettings* aPS)
 }
 
 NS_IMETHODIMP
-nsPrintSettingsQt::SetPageRanges(const nsTArray<int32_t>&)
+nsPrintSettingsQt::SetPageRanges(const nsTArray<int32_t>& aRanges)
 {
     if (aRanges.Length() % 2 != 0) {
         return NS_ERROR_FAILURE;
     }
-    mPageRanges = aPages.Clone();
+    mPageRanges = aRanges.Clone();
     return NS_OK;
 }
 
 
 NS_IMETHODIMP
-nsPrintSettingsQt::GetPageRanges(nsTArray<int32_t>&)
+nsPrintSettingsQt::GetPageRanges(nsTArray<int32_t>& aRanges)
 {
-    aPages = mPageRanges.Clone();
+    aRanges = mPageRanges.Clone();
     return NS_OK;
 }
 
