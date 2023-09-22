@@ -50,6 +50,11 @@ public:
   NS_IMETHOD GetDisplayInfo(nsTArray<nsString>& aDisplayInfo) override;
   NS_IMETHOD GetDisplayWidth(nsTArray<uint32_t>& aDisplayWidth) override;
   NS_IMETHOD GetDisplayHeight(nsTArray<uint32_t>& aDisplayHeight) override;
+
+  NS_IMETHOD GetEmbeddedInFirefoxReality(bool *aEmbeddedInFirefoxReality) override;
+  NS_IMETHOD GetTestType(nsAString& aTestType) override;
+  NS_IMETHOD GetDrmRenderDevice(nsACString& aDrmRenderDevice) override;
+
   using GfxInfoBase::GetFeatureStatus;
   using GfxInfoBase::GetFeatureSuggestedDriverVersion;
 

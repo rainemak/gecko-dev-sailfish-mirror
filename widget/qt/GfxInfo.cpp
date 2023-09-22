@@ -250,4 +250,21 @@ NS_IMETHODIMP GfxInfo::SpoofOSVersion(uint32_t)
   return NS_OK;
 }
 
+NS_IMETHODIMP GfxInfo::GetEmbeddedInFirefoxReality(bool *aEmbeddedInFirefoxReality)
+{
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP GfxInfo::GetTestType(nsAString& aTestType)
+{
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP GfxInfo::GetDrmRenderDevice(nsACString& aDrmRenderDevice)
+{
+  return NS_ERROR_FAILURE;
+}
+
+
+
 #endif
