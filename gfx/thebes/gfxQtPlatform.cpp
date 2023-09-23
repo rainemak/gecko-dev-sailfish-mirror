@@ -95,14 +95,14 @@ gfxQtPlatform::GetFontList(nsAtom *aLangGroup,
 }
 
 nsresult
-UpdateFontList(bool aFullRebuild = true)
+gfxQtPlatform::UpdateFontList(bool aFullRebuild)
 {
     gfxPlatformFontList::PlatformFontList()->UpdateFontList(aFullRebuild);
     return NS_OK;
 }
 
 bool
-CreatePlatformFontList()
+gfxQtPlatform::CreatePlatformFontList()
 {
     return gfxPlatformFontList::Initialize(new gfxFcPlatformFontList);
 }
