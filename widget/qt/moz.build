@@ -9,6 +9,7 @@ SOURCES += [
     'nsAppShell.cpp',
     'nsBidiKeyboard.cpp',
     'nsLookAndFeel.cpp',
+    'nsNativeBasicThemeQt.cpp',
     'nsNativeThemeQt.cpp',
     'nsScreenManagerQt.cpp',
     'nsScreenQt.cpp',
