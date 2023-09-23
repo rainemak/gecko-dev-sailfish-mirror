@@ -366,14 +366,18 @@ nsLookAndFeel::NativeGetColor(ColorID aID, ColorScheme, nscolor &aResult)
 nsresult
 nsLookAndFeel::NativeGetInt(IntID aID, int32_t &aResult)
 {
-    nsresult rv = nsXPLookAndFeel::NativeGetInt(aID, aResult);
-    // Make an exception for eIntID_SystemUsesDarkTheme as this is handled below
-    if (NS_SUCCEEDED(rv) && ((aID != IntID::SystemUsesDarkTheme) || (aResult != 2)))
-        return rv;
-
-    rv = NS_OK;
+    nsresult rv = NS_OK;
 
     switch (aID) {
+        case IntID::ScrollButtonLeftMouseButtonAction:
+          aResult = 0;
+          break;
+
+        case IntID::ScrollButtonMiddleMouseButtonAction:
+        case IntID::ScrollButtonRightMouseButtonAction:
+          aResult = 3;
+          break;
+
         case IntID::CaretBlinkTime:
             aResult = 500;
             break;
@@ -448,6 +452,12 @@ nsLookAndFeel::NativeGetInt(IntID aID, int32_t &aResult)
             aResult = mObserver->GetDarkAmbience() ? 1 : 0;
             break;
 
+        case IntID::DragThresholdX:
+        case IntID::DragThresholdY:
+          // Threshold where a tap becomes a drag, in 1/240" reference pixels.
+          aResult = 25;
+          break;
+
         default:
             aResult = 0;
             rv = NS_ERROR_FAILURE;
@@ -459,22 +469,21 @@ nsLookAndFeel::NativeGetInt(IntID aID, int32_t &aResult)
 nsresult
 nsLookAndFeel::NativeGetFloat(FloatID aID, float &aResult)
 {
-  nsresult res = nsXPLookAndFeel::NativeGetFloat(aID, aResult);
-  if (NS_SUCCEEDED(res))
-    return res;
-  res = NS_OK;
+  nsresult res = NS_OK;
 
   switch (aID) {
     case FloatID::IMEUnderlineRelativeSize:
         aResult = 1.0f;
         break;
+
     case FloatID::SpellCheckerUnderlineRelativeSize:
         aResult = 1.0f;
         break;
+
     default:
         aResult = -1.0;
         res = NS_ERROR_FAILURE;
-    }
+  }
   return res;
 }
 
