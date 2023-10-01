@@ -86,10 +86,11 @@ bool LoadEmbedLite(int argc, char** argv)
 {
   // start the glue, i.e. load and link against xpcom shared lib
   std::string xpcomPath = ResolveXPCOMPath(argc, argv);
-  gBootstrap = mozilla::GetBootstrap(xpcomPath.c_str());
-  if (!gBootstrap) {
+  BootstrapResult bootstrapResult = mozilla::GetBootstrap(xpcomPath.c_str());
+  if (bootstrapResult.isErr()) {
     printf("Couldn't load XPCOM from %s\n", xpcomPath.c_str());
     return false;
   }
+  gBootstrap = bootstrapResult.unwrap();
   return true;
 }
