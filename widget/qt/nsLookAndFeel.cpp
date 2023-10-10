@@ -91,7 +91,7 @@ NS_IMETHODIMP nsLookAndFeel::Observer::Observe(nsISupports*, const char* aTopic,
         mDarkAmbience = darkAmbience;
         MOZ_LOG(sLookAndFeel, LogLevel::Info, ("Ambience set to %s", mDarkAmbience ? "dark" : "light"));
         if (nsCOMPtr<nsIObserverService> obs = services::GetObserverService()) {
-            obs->NotifyObservers(nullptr, "look-and-feel-changed", nullptr);
+            NotifyChangedAllWindows(widget::ThemeChangeKind::StyleAndLayout);
         }
     }
 
