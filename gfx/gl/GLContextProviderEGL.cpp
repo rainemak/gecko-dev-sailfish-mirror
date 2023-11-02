@@ -1000,12 +1000,19 @@ already_AddRefed<GLContext> GLContextProviderEGL::CreateWrappingExisting(
   if (!aContext || !aSurface) return nullptr;
 
   nsCString failureId;
-  const auto lib = gl::DefaultEglLibrary(&failureId);
+  const RefPtr<GLLibraryEGL> lib = new GLLibraryEGL;
   if (!lib) {
-    gfxCriticalNote << "Failed[3] to load EGL library: " << failureId.get();
+    gfxCriticalNote << "Failed[3] to load EGL library";
     return nullptr;
   }
-  const auto egl = EglDisplay::Create(*lib.operator->(), (EGLContext)aDisplay, false);
+  bool result = lib.operator->()->Init(false, &failureId, aDisplay);
+  if (!result) {
+    gfxCriticalNote << "Failed[3] initialise display: "
+                      << failureId.get();
+    return nullptr;
+  }
+  const std::shared_ptr<EglDisplay> egl = lib.operator->()->DefaultDisplay(&failureId);
+
   if (!egl) {
     gfxCriticalNote << "Failed[3] to create EGL library  display: "
                     << failureId.get();

@@ -145,8 +145,11 @@ static PRLibrary* LoadLibraryForEGLOnWindows(const nsAString& filename) {
 #endif  // XP_WIN
 
 static std::shared_ptr<EglDisplay> GetAndInitDisplay(GLLibraryEGL& egl,
-                                                     void* displayType) {
-  const auto display = egl.fGetDisplay(displayType);
+                                                     void* displayType,
+                                                     EGLDisplay display = EGL_NO_DISPLAY) {
+  if (display == EGL_NO_DISPLAY) {
+    display = egl.fGetDisplay(displayType);
+  }
   if (!display) return nullptr;
   return EglDisplay::Create(egl, display, false);
 }
@@ -339,13 +342,13 @@ Maybe<SymbolLoader> GLLibraryEGL::GetSymbolLoader() const {
 /* static */
 RefPtr<GLLibraryEGL> GLLibraryEGL::Create(nsACString* const out_failureId) {
   RefPtr<GLLibraryEGL> ret = new GLLibraryEGL;
-  if (!ret->Init(out_failureId)) {
+  if (!ret->Init(false, out_failureId)) {
     return nullptr;
   }
   return ret;
 }
 
-bool GLLibraryEGL::Init(nsACString* const out_failureId) {
+bool GLLibraryEGL::Init(bool forceAccel, nsACString* const out_failureId, EGLDisplay aDisplay) {
   MOZ_RELEASE_ASSERT(!mSymbols.fTerminate);
 
   mozilla::ScopedGfxFeatureReporter reporter("EGL");
@@ -498,6 +501,11 @@ bool GLLibraryEGL::Init(nsACString* const out_failureId) {
   }
 
   // -
+  std::shared_ptr<EglDisplay> defaultDisplay = CreateDisplay(forceAccel, out_failureId, aDisplay);
+  if (!defaultDisplay) {
+    return false;
+  }
+  mDefaultDisplay = defaultDisplay;
 
   InitLibExtensions();
 
@@ -738,7 +746,8 @@ std::shared_ptr<EglDisplay> GLLibraryEGL::DefaultDisplay(
 }
 
 std::shared_ptr<EglDisplay> GLLibraryEGL::CreateDisplay(
-    const bool forceAccel, nsACString* const out_failureId) {
+    const bool forceAccel, nsACString* const out_failureId,
+    EGLDisplay aDisplay) {
   std::shared_ptr<EglDisplay> ret;
 
   if (IsExtensionSupported(EGLLibExtension::ANGLE_platform_angle_d3d)) {
@@ -799,7 +808,7 @@ std::shared_ptr<EglDisplay> GLLibraryEGL::CreateDisplay(
       }
     }
 #endif
-    ret = GetAndInitDisplay(*this, nativeDisplay);
+    ret = GetAndInitDisplay(*this, nativeDisplay, aDisplay);
   }
 
   if (!ret) {

@@ -126,18 +126,19 @@ class GLLibraryEGL final {
 
  public:
   static RefPtr<GLLibraryEGL> Create(nsACString* const out_failureId);
+  bool Init(bool forceAccel, nsACString* const out_failureId, EGLDisplay aDisplay = EGL_NO_DISPLAY);
 
  private:
   ~GLLibraryEGL() = default;
 
-  bool Init(nsACString* const out_failureId);
   void InitLibExtensions();
 
  public:
   Maybe<SymbolLoader> GetSymbolLoader() const;
 
   std::shared_ptr<EglDisplay> CreateDisplay(bool forceAccel,
-                                            nsACString* const out_failureId);
+                                            nsACString* const out_failureId,
+                                            EGLDisplay aDisplay = EGL_NO_DISPLAY);
   std::shared_ptr<EglDisplay> CreateDisplay(ID3D11Device*);
   std::shared_ptr<EglDisplay> DefaultDisplay(nsACString* const out_failureId);
 
