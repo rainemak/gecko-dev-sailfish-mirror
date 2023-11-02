@@ -884,6 +884,7 @@ class PresShell final : public nsStubDocumentObserver,
     return mObservesMutationsForPrint;
   }
 
+  void SetIsActive(bool aIsActive);
   void ActivenessMaybeChanged();
   bool IsActive() const { return mIsActive; }
 
@@ -1694,7 +1695,6 @@ class PresShell final : public nsStubDocumentObserver,
  private:
   ~PresShell();
 
-  void SetIsActive(bool aIsActive);
   bool ShouldBeActive() const;
 
 
