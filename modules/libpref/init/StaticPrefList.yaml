@@ -3986,6 +3986,63 @@
   value: false
   mirror: always
 
+#ifdef MOZ_EMBEDLITE
+  #---------------------------------------------------------------------------
+  # Prefs starting with "embedlite."
+  #---------------------------------------------------------------------------
+
+# Default azpc notifications behavior
+-   name: embedlite.azpc.handle.viewport
+    type: bool
+    value: true
+    mirror: always
+
+-   name: embedlite.azpc.handle.singletap
+    type: bool
+    value: false
+    mirror: always
+
+-   name: embedlite.azpc.handle.longtap
+    type: bool
+    value: false
+    mirror: always
+
+-   name: embedlite.azpc.json.singletap
+    type: bool
+    value: true
+    mirror: always
+
+-   name: embedlite.azpc.json.doubletap
+    type: bool
+    value: false
+    mirror: always
+
+-   name: embedlite.azpc.json.longtap
+    type: bool
+    value: true
+    mirror: always
+
+-   name: embedlite.azpc.json.scroll
+    type: bool
+    value: false
+    mirror: always
+
+# Make gecko compositor use GL context/surface provided by the application
+-   name: embedlite.compositor.external_gl_context
+    type: bool
+    value: true
+    mirror: always
+
+# Request the application to create GLContext for the compositor as
+# soon as the top level PuppetWidget is creted for the view. Setting
+# this pref only makes sense when using an external compositor gl context
+-   name: embedlite.compositor.request_external_gl_context_early
+    type: bool
+    value: true
+    mirror: always
+
+#endif
+
 #---------------------------------------------------------------------------
 # Prefs starting with "extensions."
 #---------------------------------------------------------------------------
