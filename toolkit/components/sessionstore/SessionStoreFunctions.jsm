@@ -6,10 +6,6 @@ const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  SessionStore: "resource:///modules/sessionstore/SessionStore.jsm",
-});
-
 function UpdateSessionStore(
   aBrowser,
   aBrowsingContext,
@@ -75,24 +71,7 @@ var SessionStoreFuncInternal = {
     aCollectSHistory,
     aData
   ) {
-    let currentData = {};
-    if (aData.docShellCaps != undefined) {
-      currentData.disallow = aData.docShellCaps ? aData.docShellCaps : null;
-    }
-    if (aData.isPrivate != undefined) {
-      currentData.isPrivate = aData.isPrivate;
-    }
-
-    SessionStore.updateSessionStoreFromTablistener(
-      aBrowser,
-      aBrowsingContext,
-      aPermanentKey,
-      {
-        data: currentData,
-        epoch: aEpoch,
-        sHistoryNeeded: aCollectSHistory,
-      }
-    );
+    // Not implemented
   },
 
   updateSessionStoreForWindow: function SSF_updateSessionStoreForWindow(
@@ -102,12 +81,7 @@ var SessionStoreFuncInternal = {
     aEpoch,
     aData
   ) {
-    SessionStore.updateSessionStoreFromTablistener(
-      aBrowser,
-      aBrowsingContext,
-      aPermanentKey,
-      { data: { windowstatechange: aData }, epoch: aEpoch }
-    );
+      // Not implemented
   },
 
   updateSessionStoreForStorage: function SSF_updateSessionStoreForWindow(
@@ -117,11 +91,6 @@ var SessionStoreFuncInternal = {
     aEpoch,
     aData
   ) {
-    SessionStore.updateSessionStoreFromTablistener(
-      aBrowser,
-      aBrowsingContext,
-      aPermanentKey,
-      { data: { storage: aData }, epoch: aEpoch }
-    );
+      // Not implemented
   },
 };
