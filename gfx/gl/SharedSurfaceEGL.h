@@ -31,11 +31,16 @@ class SharedSurface_EGLImage final : public SharedSurface {
  public:
   const EGLImage mImage;
 
-  static UniquePtr<SharedSurface_EGLImage> Create(const SharedSurfaceDesc&);
-
  protected:
-  SharedSurface_EGLImage(const SharedSurfaceDesc&,
-                         UniquePtr<MozFramebuffer>&& fb, EGLImage);
+  GLuint mProdTex;
+
+ public:
+  static UniquePtr<SharedSurface_EGLImage> Create(GLContext* prodGL,
+                                                  const gfx::IntSize& size,
+                                                  EGLContext context);
+ protected:
+  SharedSurface_EGLImage(GLContext* gl, const gfx::IntSize& size,
+                         GLuint prodTex, EGLImage image);
 
   void UpdateProdTexture(const MutexAutoLock& curAutoLock);
 
@@ -51,21 +56,32 @@ class SharedSurface_EGLImage final : public SharedSurface {
   virtual void ProducerReadAcquireImpl() override;
   virtual void ProducerReadReleaseImpl() override{};
 
+  virtual GLuint ProdTexture() override { return mProdTex; }
+
   Maybe<layers::SurfaceDescriptor> ToSurfaceDescriptor() override;
 };
 
 class SurfaceFactory_EGLImage final : public SurfaceFactory {
  public:
-  static UniquePtr<SurfaceFactory_EGLImage> Create(GLContext&);
+  static UniquePtr<SurfaceFactory_EGLImage> Create(
+      GLContext* prodGL,
+      const RefPtr<layers::LayersIPCChannel>& allocator,
+      const layers::TextureFlags& flags);
+
+ protected:
+  const EGLContext mContext;
 
  private:
-  explicit SurfaceFactory_EGLImage(const PartialSharedSurfaceDesc& desc)
-      : SurfaceFactory(desc) {}
+  explicit SurfaceFactory_EGLImage(const PartialSharedSurfaceDesc& desc,
+                                   const RefPtr<layers::LayersIPCChannel>& allocator,
+                                   const layers::TextureFlags& flags, EGLContext context)
+      : SurfaceFactory(desc, allocator, flags),
+        mContext(context) {}
 
  public:
   virtual UniquePtr<SharedSurface> CreateSharedImpl(
       const SharedSurfaceDesc& desc) override {
-    return SharedSurface_EGLImage::Create(desc);
+    return SharedSurface_EGLImage::Create(mDesc.gl, desc.size, mContext);
   }
 };
 

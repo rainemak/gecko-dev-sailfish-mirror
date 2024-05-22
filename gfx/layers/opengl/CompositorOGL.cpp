@@ -247,11 +247,9 @@ already_AddRefed<mozilla::gl::GLContext> CompositorOGL::CreateContext() {
   // Allow to create offscreen GL context for main Layer Manager
   if (!context && gfxEnv::LayersPreferOffscreen()) {
     nsCString discardFailureId;
-    context = GLContextProvider::CreateHeadless(
-        {CreateContextFlags::REQUIRE_COMPAT_PROFILE}, &discardFailureId);
-    if (!context->CreateOffscreenDefaultFb(mSurfaceSize)) {
-      context = nullptr;
-    }
+    context = GLContextProvider::CreateOffscreen(
+        mSurfaceSize, CreateContextFlags::REQUIRE_COMPAT_PROFILE,
+        &discardFailureId);
   }
 
   if (!context) {
@@ -615,9 +613,15 @@ void CompositorOGL::PrepareViewport(CompositingRenderTargetOGL* aRenderTarget) {
     // Matrix to transform (0, 0, aWidth, aHeight) to viewport space (-1.0, 1.0,
     // 2, 2) and flip the contents.
     Matrix viewMatrix;
-    viewMatrix.PreTranslate(-1.0, 1.0);
-    viewMatrix.PreScale(2.0f / float(size.width), 2.0f / float(size.height));
-    viewMatrix.PreScale(1.0f, -1.0f);
+    if (mGLContext->IsOffscreen() && aRenderTarget->IsWindow()) {
+      // In case of rendering via GL Offscreen context, disable Y-Flipping
+      viewMatrix.PreTranslate(-1.0, -1.0);
+      viewMatrix.PreScale(2.0f / float(size.width), 2.0f / float(size.height));
+    } else {
+      viewMatrix.PreTranslate(-1.0, 1.0);
+      viewMatrix.PreScale(2.0f / float(size.width), 2.0f / float(size.height));
+      viewMatrix.PreScale(1.0f, -1.0f);
+    }
 
     MOZ_ASSERT(mCurrentRenderTarget, "No destination");
 
@@ -761,7 +765,7 @@ static GLenum GetFrameBufferInternalFormat(
 
 void CompositorOGL::ClearRect(const gfx::Rect& aRect) {
   // Map aRect to OGL coordinates, origin:bottom-left
-  GLint y = mViewportSize.height - aRect.YMost();
+  GLint y = mGLContext->IsOffscreen() && mCurrentRenderTarget->IsWindow() ? aRect.Y() : FlipY(aRect.YMost());
 
   ScopedGLState scopedScissorTestState(mGLContext, LOCAL_GL_SCISSOR_TEST, true);
   ScopedScissorRect autoScissorRect(mGLContext, aRect.X(), y, aRect.Width(),
@@ -1483,7 +1487,7 @@ void CompositorOGL::DrawGeometry(const Geometry& aGeometry,
 
   ScopedGLState scopedScissorTestState(mGLContext, LOCAL_GL_SCISSOR_TEST, true);
   ScopedScissorRect autoScissorRect(mGLContext, clipRect.X(),
-                                    FlipY(clipRect.Y() + clipRect.Height()),
+                                    mGLContext->IsOffscreen() && mCurrentRenderTarget->IsWindow() ? clipRect.Y() : FlipY(clipRect.YMost()),
                                     clipRect.Width(), clipRect.Height());
 
   MaskType maskType;

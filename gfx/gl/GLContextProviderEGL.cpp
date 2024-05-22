@@ -1184,6 +1184,7 @@ RefPtr<GLContextEGL> GLContextEGL::CreateEGLPBufferOffscreenContextImpl(
     const mozilla::gfx::IntSize& size, const bool useGles,
     nsACString* const out_failureId) {
   const EGLConfig config = ChooseConfig(*egl, desc, useGles);
+
   if (config == EGL_NO_CONFIG) {
     *out_failureId = "FEATURE_FAILURE_EGL_NO_CONFIG"_ns;
     NS_WARNING("Failed to find a compatible config.");
@@ -1205,6 +1206,7 @@ RefPtr<GLContextEGL> GLContextEGL::CreateEGLPBufferOffscreenContextImpl(
     surface = GLContextEGL::CreatePBufferSurfaceTryingPowerOfTwo(
         *egl, config, LOCAL_EGL_NONE, pbSize);
   }
+
   if (!surface) {
     *out_failureId = "FEATURE_FAILURE_EGL_POT"_ns;
     NS_WARNING("Failed to create PBuffer for context!");
@@ -1251,6 +1253,40 @@ already_AddRefed<GLContext> GLContextProviderEGL::CreateHeadless(
   auto ret = GLContextEGL::CreateEGLPBufferOffscreenContext(
       display, desc, dummySize, out_failureId);
   return ret.forget();
+}
+
+already_AddRefed<GLContext> GLContextProviderEGL::CreateOffscreen(
+    const mozilla::gfx::IntSize& size,
+    CreateContextFlags flags, nsACString* const out_failureId) {
+
+  RefPtr<GLContext> gl;
+
+  gl = CreateHeadless({CreateContextFlags::REQUIRE_COMPAT_PROFILE}, out_failureId);
+
+  // Init the offscreen with the updated offscreen caps.
+  if (!gl || !gl->IsOffscreenSizeAllowed(size)) {
+    return nullptr;
+  }
+
+  UniquePtr<GLScreenBuffer> newScreen = GLScreenBuffer::Create(gl, size);
+  if ((!newScreen) || (!newScreen->Resize(size))) {
+    return nullptr;
+  }
+
+  // This will rebind to 0 (Screen) if needed when
+  // it falls out of scope.
+  ScopedBindFramebuffer autoFB(gl);
+
+  gl->mScreen = std::move(newScreen);
+
+  if (!gl->MakeCurrent()) {
+    return nullptr;
+  }
+  gl->fBindFramebuffer(LOCAL_GL_FRAMEBUFFER, 0);
+  gl->fScissor(0, 0, size.width, size.height);
+  gl->fViewport(0, 0, size.width, size.height);
+
+  return gl.forget();
 }
 
 // Don't want a global context on Android as 1) share groups across 2 threads

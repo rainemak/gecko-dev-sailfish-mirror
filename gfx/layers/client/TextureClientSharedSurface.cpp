@@ -36,6 +36,15 @@ SharedSurfaceTextureData::SharedSurfaceTextureData(
     const gfx::IntSize size)
     : mDesc(desc), mFormat(format), mSize(size) {}
 
+SharedSurfaceTextureData::SharedSurfaceTextureData(
+    UniquePtr<gl::SharedSurface> surf)
+    : mSurf(std::move(surf)),
+      mDesc(),
+      mFormat(),
+      mSize(mSurf->mDesc.size)
+{
+}
+
 SharedSurfaceTextureData::~SharedSurfaceTextureData() = default;
 
 void SharedSurfaceTextureData::Deallocate(LayersIPCChannel*) {}
@@ -91,6 +100,46 @@ bool SharedSurfaceTextureData::Serialize(SurfaceDescriptor& aOutDescriptor) {
   MOZ_ASSERT_UNREACHABLE("unexpected to be called");
   return false;
 #endif
+}
+
+SharedSurfaceTextureClient::SharedSurfaceTextureClient(
+    SharedSurfaceTextureData* aData, TextureFlags aFlags,
+    LayersIPCChannel* aAllocator)
+    : TextureClient(aData, aFlags, aAllocator) {
+}
+
+already_AddRefed<SharedSurfaceTextureClient> SharedSurfaceTextureClient::Create(
+    UniquePtr<gl::SharedSurface> surf, gl::SurfaceFactory* factory,
+    LayersIPCChannel* aAllocator, TextureFlags aFlags) {
+  if (!surf) {
+    return nullptr;
+  }
+  TextureFlags flags = aFlags | TextureFlags::RECYCLE | surf->GetTextureFlags();
+  SharedSurfaceTextureData* data =
+      new SharedSurfaceTextureData(std::move(surf));
+  return MakeAndAddRef<SharedSurfaceTextureClient>(data, flags, aAllocator);
+}
+
+SharedSurfaceTextureClient::~SharedSurfaceTextureClient() {
+  // XXX - Things break when using the proper destruction handshake with
+  // SharedSurfaceTextureData because the TextureData outlives its gl
+  // context. Having a strong reference to the gl context creates a cycle.
+  // This needs to be fixed in a better way, though, because deleting
+  // the TextureData here can race with the compositor and cause flashing.
+  TextureData* data = mData;
+  mData = nullptr;
+
+  Destroy();
+
+  if (data) {
+    // Destroy mData right away without doing the proper deallocation handshake,
+    // because SharedSurface depends on things that may not outlive the
+    // texture's destructor so we can't wait until we know the compositor isn't
+    // using the texture anymore. It goes without saying that this is really bad
+    // and we should fix the bugs that block doing the right thing such as bug
+    // 1224199 sooner rather than later.
+    delete data;
+  }
 }
 
 TextureFlags SharedSurfaceTextureData::GetTextureFlags() const {

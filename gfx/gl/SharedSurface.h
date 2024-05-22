@@ -75,9 +75,16 @@ class SharedSurface {
   bool mIsProducerAcquired = false;
 
   SharedSurface(const SharedSurfaceDesc&, UniquePtr<MozFramebuffer>);
+  SharedSurface(SharedSurfaceType type,
+                GLContext* gl, const gfx::IntSize& size,
+                bool canRecycle);
 
  public:
   virtual ~SharedSurface();
+
+  // Specifies to the TextureClient any flags which
+  // are required by the SharedSurface backend.
+  virtual layers::TextureFlags GetTextureFlags() const;
 
   bool IsLocked() const { return mIsLocked; }
   bool IsProducerAcquired() const { return mIsProducerAcquired; }
@@ -134,6 +141,15 @@ class SharedSurface {
   // You can call WaitForBufferOwnership to wait for availability.
   virtual bool IsBufferAvailable() const { return true; }
 
+  // For use when AttachType is correct.
+  virtual GLenum ProdTextureTarget() const {
+    return LOCAL_GL_TEXTURE_2D;
+  }
+
+  virtual GLuint ProdTexture() {
+    MOZ_CRASH("GFX: Did you forget to override this function?");
+  }
+
   virtual bool NeedsIndirectReads() const { return false; }
 
   virtual Maybe<layers::SurfaceDescriptor> ToSurfaceDescriptor() = 0;
@@ -141,30 +157,115 @@ class SharedSurface {
 
 // -
 
+template <typename T>
+class RefSet {
+  std::set<T*> mSet;
+
+ public:
+  ~RefSet() { clear(); }
+
+  auto begin() -> decltype(mSet.begin()) { return mSet.begin(); }
+
+  void clear() {
+    for (auto itr = mSet.begin(); itr != mSet.end(); ++itr) {
+      (*itr)->Release();
+    }
+    mSet.clear();
+  }
+
+  bool empty() const { return mSet.empty(); }
+
+  bool insert(T* x) {
+    if (mSet.insert(x).second) {
+      x->AddRef();
+      return true;
+    }
+
+    return false;
+  }
+
+  bool erase(T* x) {
+    if (mSet.erase(x)) {
+      x->Release();
+      return true;
+    }
+
+    return false;
+  }
+};
+
+template <typename T>
+class RefQueue {
+  std::queue<T*> mQueue;
+
+ public:
+  ~RefQueue() { clear(); }
+
+  void clear() {
+    while (!empty()) {
+      pop();
+    }
+  }
+
+  bool empty() const { return mQueue.empty(); }
+
+  size_t size() const { return mQueue.size(); }
+
+  void push(T* x) {
+    mQueue.push(x);
+    x->AddRef();
+  }
+
+  T* front() const { return mQueue.front(); }
+
+  void pop() {
+    T* x = mQueue.front();
+    x->Release();
+    mQueue.pop();
+  }
+};
+
 class SurfaceFactory {
  public:
   const PartialSharedSurfaceDesc mDesc;
+  const RefPtr<layers::LayersIPCChannel> mAllocator;
+  const layers::TextureFlags mFlags;
 
  protected:
   Mutex mMutex;
+  RefQueue<layers::SharedSurfaceTextureClient> mRecycleFreePool;
+  RefSet<layers::SharedSurfaceTextureClient> mRecycleTotalPool;
 
  public:
   static UniquePtr<SurfaceFactory> Create(GLContext*, layers::TextureType);
 
  protected:
-  explicit SurfaceFactory(const PartialSharedSurfaceDesc&);
+  explicit SurfaceFactory(const PartialSharedSurfaceDesc&,
+                          const RefPtr<layers::LayersIPCChannel>&,
+                          const layers::TextureFlags&);
 
  public:
   virtual ~SurfaceFactory();
 
- protected:
+protected:
   virtual UniquePtr<SharedSurface> CreateSharedImpl(
       const SharedSurfaceDesc&) = 0;
+
+  void StartRecycling(layers::SharedSurfaceTextureClient* tc);
+  void SetRecycleCallback(layers::SharedSurfaceTextureClient* tc);
+  void StopRecycling(layers::SharedSurfaceTextureClient* tc);
 
  public:
   UniquePtr<SharedSurface> CreateShared(const gfx::IntSize& size) {
     return CreateSharedImpl({mDesc, size});
   }
+  already_AddRefed<layers::SharedSurfaceTextureClient> NewTexClient(
+      const gfx::IntSize& size);
+
+  static void RecycleCallback(layers::TextureClient* tc, void* /*closure*/);
+
+  // Auto-deletes surfs of the wrong type.
+  bool Recycle(layers::SharedSurfaceTextureClient* texClient);
 };
 
 template <typename T>

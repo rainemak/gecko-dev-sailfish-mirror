@@ -14,6 +14,8 @@
 #include "GLUploadHelpers.h"
 #include "GfxTexturesReporter.h"
 
+#include "TextureImageEGL.h"
+
 using namespace mozilla::gfx;
 
 namespace mozilla {
@@ -40,6 +42,14 @@ static already_AddRefed<TextureImage> TileGenFunc(
     TextureImage::Flags aFlags, TextureImage::ImageFormat aImageFormat) {
   return CreateBasicTextureImage(gl, aSize, aContentType,
                                  LOCAL_GL_CLAMP_TO_EDGE, aFlags);
+
+  switch (gl->GetContextType()) {
+    case GLContextType::EGL:
+      return TileGenFuncEGL(gl, aSize, aContentType, aFlags, aImageFormat);
+    default:
+      return CreateBasicTextureImage(gl, aSize, aContentType,
+                                     LOCAL_GL_CLAMP_TO_EDGE, aFlags);
+  }
 }
 
 already_AddRefed<TextureImage> TextureImage::Create(

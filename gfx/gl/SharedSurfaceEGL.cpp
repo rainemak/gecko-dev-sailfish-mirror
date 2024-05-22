@@ -33,43 +33,76 @@ static bool HasEglImageExtensions(const GLContextEGL& gl) {
 
 /*static*/
 UniquePtr<SurfaceFactory_EGLImage> SurfaceFactory_EGLImage::Create(
-    GLContext& gl_) {
-  auto& gl = *GLContextEGL::Cast(&gl_);
-  if (!HasEglImageExtensions(gl)) return nullptr;
+    GLContext* prodGL,
+    const RefPtr<layers::LayersIPCChannel>& allocator,
+    const layers::TextureFlags& flags) {
+  const auto& gle = GLContextEGL::Cast(prodGL);
+  //const auto& egl = gle->mEgl;
+  const auto& context = gle->mContext;
 
-  const auto partialDesc = PartialSharedSurfaceDesc{
-      &gl, SharedSurfaceType::EGLImageShare, layers::TextureType::EGLImage,
-      false,  // Can't recycle, as mSync changes never update TextureHost.
-  };
-  return AsUnique(new SurfaceFactory_EGLImage(partialDesc));
+  typedef SurfaceFactory_EGLImage ptrT;
+  UniquePtr<ptrT> ret;
+
+  if (HasEglImageExtensions(*gle)) {
+    // The surface allocator that we want to create this
+    // for.  May be null.
+    RefPtr<layers::LayersIPCChannel> surfaceAllocator;
+
+
+    ret.reset(new ptrT({prodGL, SharedSurfaceType::Basic, layers::TextureType::Unknown, true}, allocator, flags, context));
+  }
+
+  return ret;
 }
 
 // -
 
 /*static*/
 UniquePtr<SharedSurface_EGLImage> SharedSurface_EGLImage::Create(
-    const SharedSurfaceDesc& desc) {
-  const auto& gle = GLContextEGL::Cast(desc.gl);
-  const auto& context = gle->mContext;
-  const auto& egl = *(gle->mEgl);
+    GLContext* prodGL, const gfx::IntSize& size, EGLContext context) {
+  const auto& gle = GLContextEGL::Cast(prodGL);
+  const auto& egl = gle->mEgl;
+  MOZ_ASSERT(egl);
+  MOZ_ASSERT(context);
+  nsCString out_failureId;
 
-  auto fb = MozFramebuffer::Create(desc.gl, desc.size, 0, false);
-  if (!fb) return nullptr;
+  UniquePtr<SharedSurface_EGLImage> ret;
 
-  const auto buffer = reinterpret_cast<EGLClientBuffer>(fb->ColorTex());
-  const auto image =
-      egl.fCreateImage(context, LOCAL_EGL_GL_TEXTURE_2D, buffer, nullptr);
-  if (!image) return nullptr;
+  if (!HasEglImageExtensions(*gle)) {
+    return ret;
+  }
 
-  return AsUnique(new SharedSurface_EGLImage(desc, std::move(fb), image));
+  MOZ_ALWAYS_TRUE(prodGL->MakeCurrent());
+  GLuint prodTex = CreateTexture(*prodGL, size);
+  if (!prodTex) {
+    return ret;
+  }
+
+  EGLClientBuffer buffer =
+      reinterpret_cast<EGLClientBuffer>(uintptr_t(prodTex));
+  EGLImage image = egl->fCreateImage(context,
+                                     LOCAL_EGL_GL_TEXTURE_2D, buffer, nullptr);
+
+  if (!image) {
+    prodGL->fDeleteTextures(1, &prodTex);
+    return ret;
+  }
+
+  ret.reset(new SharedSurface_EGLImage(prodGL, size, prodTex, image));
+  return ret;
 }
 
-SharedSurface_EGLImage::SharedSurface_EGLImage(const SharedSurfaceDesc& desc,
-                                               UniquePtr<MozFramebuffer>&& fb,
-                                               const EGLImage image)
-    : SharedSurface(desc, std::move(fb)),
+SharedSurface_EGLImage::SharedSurface_EGLImage(GLContext* gl,
+                                               const gfx::IntSize& size,
+                                               GLuint prodTex, EGLImage image)
+    : SharedSurface(
+          SharedSurfaceType::EGLImageShare, gl, size,
+          false)  // Can't recycle, as mSync changes never update TextureHost.
+      ,
       mMutex("SharedSurface_EGLImage mutex"),
-      mImage(image) {}
+      mSync(0),
+      mImage(image),
+      mProdTex(prodTex) {}
 
 SharedSurface_EGLImage::~SharedSurface_EGLImage() {
   const auto& gle = GLContextEGL::Cast(mDesc.gl);
@@ -82,7 +115,13 @@ SharedSurface_EGLImage::~SharedSurface_EGLImage() {
     egl->fDestroySync(mSync);
     mSync = 0;
   }
+
+  if (!mDesc.gl || !mDesc.gl->MakeCurrent()) return;
+
+  mDesc.gl->fDeleteTextures(1, &mProdTex);
+  mProdTex = 0;
 }
+
 
 void SharedSurface_EGLImage::ProducerReleaseImpl() {
   const auto& gl = GLContextEGL::Cast(mDesc.gl);

@@ -35,7 +35,6 @@
 #include "nsTArray.h"
 #include "GLConsts.h"
 #include "GLDefs.h"
-#include "GLScreenBuffer.h"
 #include "GLTypes.h"
 #include "nsRegionFwd.h"
 #include "nsString.h"
@@ -59,6 +58,8 @@ class GLReadTexImageHelper;
 class SharedSurface;
 class SymbolLoader;
 struct SymLoadStruct;
+class SwapChain;
+class GLScreenBuffer;
 }  // namespace gl
 
 namespace layers {
@@ -2021,7 +2022,9 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
     AFTER_GL_CALL;
   }
 
-  void fBindFramebuffer(GLenum target, GLuint framebuffer) {
+  void fBindFramebuffer(GLenum target, GLuint framebuffer);
+
+  void raw_fBindFramebuffer(GLenum target, GLuint framebuffer) {
     BEFORE_GL_CALL;
     mSymbols.fBindFramebuffer(target, framebuffer);
     AFTER_GL_CALL;
@@ -3512,6 +3515,12 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
     return thisShared == otherShared;
   }
 
+ protected:
+  friend class GLScreenBuffer;
+  friend class GLContextProviderEGL;
+  UniquePtr<GLScreenBuffer> mScreen;
+
+ public:
   bool IsFramebufferComplete(GLuint fb, GLenum* status = nullptr);
 
   // Does not check completeness.
@@ -3538,6 +3547,8 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
   SharedSurface* GetLockedSurface() const { return mLockedSurface; }
 
   bool IsOffscreen() const { return mDesc.isOffscreen; }
+
+  GLScreenBuffer* Screen() const { return mScreen.get(); }
 
   SwapChain* GetSwapChain() const { return mSwapChain.get(); }
 
@@ -3779,7 +3790,7 @@ class Texture final {
  *
  * See mozilla::gl::CreateTexture.
  */
-UniquePtr<Texture> CreateTexture(GLContext&, const gfx::IntSize& size);
+GLuint CreateTexture(GLContext& gl, const gfx::IntSize& aSize);
 
 /**
  * Helper function that calculates the number of bytes required per

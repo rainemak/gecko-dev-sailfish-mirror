@@ -255,7 +255,6 @@ void CompositorVsyncScheduler::Composite(const VsyncEvent& aVsyncEvent) {
     // Tell the owner to do a composite
     mVsyncSchedulerOwner->CompositeToTarget(aVsyncEvent.mId, nullptr, nullptr);
     mVsyncSchedulerOwner->CompositeToDefaultTarget(aVsyncEvent.mId);
-
     mVsyncNotificationsSkipped = 0;
 
     TimeDuration compositeFrameTotal = TimeStamp::Now() - aVsyncEvent.mTime;

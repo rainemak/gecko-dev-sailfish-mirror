@@ -55,7 +55,20 @@ SharedSurface::SharedSurface(const SharedSurfaceDesc& desc,
                              UniquePtr<MozFramebuffer> fb)
     : mDesc(desc), mFb(std::move(fb)) {}
 
+SharedSurface::SharedSurface(SharedSurfaceType type,
+                             GLContext* gl, const gfx::IntSize& size,
+                             bool canRecycle)
+    : mDesc{gl, type, layers::TextureType(0), canRecycle, size},
+      mIsLocked(false),
+      mIsProducerAcquired(false)
+{
+}
+
 SharedSurface::~SharedSurface() = default;
+
+layers::TextureFlags SharedSurface::GetTextureFlags() const {
+  return layers::TextureFlags::NO_FLAGS;
+}
 
 void SharedSurface::LockProd() {
   MOZ_ASSERT(!mIsLocked);
@@ -149,10 +162,105 @@ UniquePtr<SurfaceFactory> SurfaceFactory::Create(
   return nullptr;
 }
 
-SurfaceFactory::SurfaceFactory(const PartialSharedSurfaceDesc& partialDesc)
-    : mDesc(partialDesc), mMutex("SurfaceFactor::mMutex") {}
+SurfaceFactory::SurfaceFactory(const PartialSharedSurfaceDesc& partialDesc,
+                               const RefPtr<layers::LayersIPCChannel>& allocator,
+                               const layers::TextureFlags& flags)
+    : mDesc(partialDesc),
+      mAllocator(allocator),
+      mFlags(flags),
+      mMutex("SurfaceFactor::mMutex")
+{
+}
 
-SurfaceFactory::~SurfaceFactory() = default;
+SurfaceFactory::~SurfaceFactory() {
+  while (!mRecycleTotalPool.empty()) {
+    RefPtr<layers::SharedSurfaceTextureClient> tex = *mRecycleTotalPool.begin();
+    StopRecycling(tex);
+  }
+
+  MOZ_RELEASE_ASSERT(mRecycleTotalPool.empty(),
+                     "GFX: Surface recycle pool not empty.");
+
+  // If we mRecycleFreePool.clear() before StopRecycling(), we may try to
+  // recycle it, fail, call StopRecycling(), then return here and call it again.
+  mRecycleFreePool.clear();
+}
+
+already_AddRefed<layers::SharedSurfaceTextureClient>
+SurfaceFactory::NewTexClient(const gfx::IntSize& size) {
+  while (!mRecycleFreePool.empty()) {
+    RefPtr<layers::SharedSurfaceTextureClient> cur = mRecycleFreePool.front();
+    mRecycleFreePool.pop();
+
+    if (cur->Surf()->mDesc.size == size) {
+      cur->Surf()->WaitForBufferOwnership();
+      return cur.forget();
+    }
+
+    StopRecycling(cur);
+  }
+
+  UniquePtr<SharedSurface> surf = CreateShared(size);
+  if (!surf) return nullptr;
+
+  RefPtr<layers::SharedSurfaceTextureClient> ret;
+  ret = layers::SharedSurfaceTextureClient::Create(std::move(surf), this,
+                                                   mAllocator, mFlags);
+
+  StartRecycling(ret);
+
+  return ret.forget();
+}
+
+void SurfaceFactory::StartRecycling(layers::SharedSurfaceTextureClient* tc) {
+  tc->SetRecycleCallback(&SurfaceFactory::RecycleCallback,
+                         static_cast<void*>(this));
+
+  bool didInsert = mRecycleTotalPool.insert(tc);
+  MOZ_RELEASE_ASSERT(
+      didInsert,
+      "GFX: Shared surface texture client was not inserted to recycle.");
+  mozilla::Unused << didInsert;
+}
+
+void SurfaceFactory::StopRecycling(layers::SharedSurfaceTextureClient* tc) {
+  MutexAutoLock autoLock(mMutex);
+  // Must clear before releasing ref.
+  tc->ClearRecycleCallback();
+
+  bool didErase = mRecycleTotalPool.erase(tc);
+  MOZ_RELEASE_ASSERT(didErase,
+                     "GFX: Shared texture surface client was not erased.");
+  mozilla::Unused << didErase;
+}
+
+/*static*/
+void SurfaceFactory::RecycleCallback(layers::TextureClient* rawTC,
+                                     void* rawFactory) {
+  RefPtr<layers::SharedSurfaceTextureClient> tc;
+  tc = static_cast<layers::SharedSurfaceTextureClient*>(rawTC);
+  SurfaceFactory* factory = static_cast<SurfaceFactory*>(rawFactory);
+
+  if (tc->Surf()->mDesc.canRecycle) {
+    if (factory->Recycle(tc)) return;
+  }
+
+  // Did not recover the tex client. End the (re)cycle!
+  factory->StopRecycling(tc);
+}
+
+bool SurfaceFactory::Recycle(layers::SharedSurfaceTextureClient* texClient) {
+  MOZ_ASSERT(texClient);
+  MutexAutoLock autoLock(mMutex);
+
+  if (mRecycleFreePool.size() >= 2) {
+    return false;
+  }
+
+  RefPtr<layers::SharedSurfaceTextureClient> texClientRef = texClient;
+  mRecycleFreePool.push(texClientRef);
+  return true;
+}
 
 }  // namespace gl
 }  // namespace mozilla
