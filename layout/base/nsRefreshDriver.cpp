@@ -2647,12 +2647,6 @@ void nsRefreshDriver::RevokeTransactionId(
     FinishedWaitingForTransaction();
   }
 
-  // Notify the pres context so that it can deliver MozAfterPaint for this
-  // id if any caller was expecting it.
-  nsPresContext* pc = GetPresContext();
-  if (pc) {
-    pc->NotifyRevokingDidPaint(aTransactionId);
-  }
   // Remove aTransactionId from the set of outstanding transactions since we're
   // no longer waiting on it to be completed, but don't revert
   // mNextTransactionId since we can't use the id again.

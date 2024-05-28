@@ -407,7 +407,6 @@ nsDOMWindowUtils::UpdateLayerTree() {
         ChangesToFlush(FlushType::Display, false /* flush animations */));
     RefPtr<nsViewManager> vm = presShell->GetViewManager();
     if (nsView* view = vm->GetRootView()) {
-      nsAutoScriptBlocker scriptBlocker;
       presShell->Paint(
           view, view->GetBounds(),
           PaintFlags::PaintLayers | PaintFlags::PaintSyncDecodeImages);

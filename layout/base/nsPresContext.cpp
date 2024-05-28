@@ -314,6 +314,9 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(nsPresContext)
 NS_IMPL_CYCLE_COLLECTING_RELEASE_WITH_LAST_RELEASE(nsPresContext, LastRelease())
 
 void nsPresContext::LastRelease() {
+  if (IsRoot()) {
+    static_cast<nsRootPresContext*>(this)->CancelAllDidPaintTimers();
+  }
   if (mMissingFonts) {
     mMissingFonts->Clear();
   }
@@ -830,6 +833,13 @@ void nsPresContext::DetachPresShell() {
   if (mRefreshDriver && mRefreshDriver->GetPresContext() == this) {
     mRefreshDriver->Disconnect();
     // Can't null out the refresh driver here.
+  }
+
+  if (IsRoot()) {
+    nsRootPresContext* thisRoot = static_cast<nsRootPresContext*>(this);
+
+    // The did-paint timer also depends on a non-null pres shell.
+    thisRoot->CancelAllDidPaintTimers();
   }
 }
 
@@ -2018,6 +2028,12 @@ void nsPresContext::NotifyInvalidation(TransactionId aTransactionId,
       transaction->mTransactionId = aTransactionId;
     }
   }
+  if (!pc) {
+    nsRootPresContext* rpc = GetRootPresContext();
+    if (rpc) {
+      rpc->EnsureEventualDidPaintEvent(aTransactionId);
+    }
+  }
 
   TransactionInvalidations* transaction = GetInvalidations(aTransactionId);
   MOZ_ASSERT(transaction);
@@ -2096,63 +2112,24 @@ class DelayedFireDOMPaintEvent : public Runnable {
   nsTArray<nsRect> mList;
 };
 
-void nsPresContext::NotifyRevokingDidPaint(TransactionId aTransactionId) {
-  if ((IsRoot() || !PresShell()->IsVisible()) && mTransactions.IsEmpty()) {
-    return;
-  }
-
-  TransactionInvalidations* transaction = nullptr;
-  for (auto& t : mTransactions) {
-    if (t.mTransactionId == aTransactionId) {
-      transaction = &t;
-      break;
-    }
-  }
-  // If there are no transaction invalidations (which imply callers waiting
-  // on the event) for this revoked id, then we don't need to fire a
-  // MozAfterPaint.
-  if (!transaction) {
-    return;
-  }
-
-  // If there are queued transactions with an earlier id, we can't send
-  // our event now since it will arrive out of order. Set the waiting for
-  // previous transaction flag to true, and we'll send the event when
-  // the others are completed.
-  // If this is the only transaction, then we can send it immediately.
-  if (mTransactions.Length() == 1) {
-    nsCOMPtr<nsIRunnable> ev = new DelayedFireDOMPaintEvent(
-        this, std::move(transaction->mInvalidations),
-        transaction->mTransactionId, mozilla::TimeStamp());
-    nsContentUtils::AddScriptRunner(ev);
-    mTransactions.RemoveElementAt(0);
-  } else {
-    transaction->mIsWaitingForPreviousTransaction = true;
-  }
-
-  auto recurse = [&aTransactionId](dom::Document& aSubDoc) {
-    if (nsPresContext* pc = aSubDoc.GetPresContext()) {
-      pc->NotifyRevokingDidPaint(aTransactionId);
-    }
-    return CallState::Continue;
-  };
-  mDocument->EnumerateSubDocuments(recurse);
-}
-
 void nsPresContext::NotifyDidPaintForSubtree(
     TransactionId aTransactionId, const mozilla::TimeStamp& aTimeStamp) {
   if (mFirstContentfulPaintTransactionId && !mHadContentfulPaintComposite) {
     if (aTransactionId >= *mFirstContentfulPaintTransactionId) {
       mHadContentfulPaintComposite = true;
       RefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
-      if (timing && !IsPrintingOrPrintPreview()) {
+      if (timing && !IsPrintingOrPrintPreview() && !aTimeStamp.IsNull()) {
         timing->NotifyContentfulPaintForRootContentDocument(aTimeStamp);
       }
     }
   }
 
-  if (IsRoot() && mTransactions.IsEmpty()) {
-    return;
+  if (IsRoot()) {
+    static_cast<nsRootPresContext*>(this)->CancelDidPaintTimers(aTransactionId);
+
+    if (mTransactions.IsEmpty()) {
+      return;
+    }
   }
 
   if (!PresShell()->IsVisible() && mTransactions.IsEmpty()) {
@@ -2179,18 +2156,6 @@ void nsPresContext::NotifyDidPaintForSubtree(
       }
       mTransactions.RemoveElementAt(i);
     } else {
-      // If there are transaction which is waiting for this transaction,
-      // we should fire a MozAfterPaint immediately.
-      if (sent && mTransactions[i].mIsWaitingForPreviousTransaction) {
-        nsCOMPtr<nsIRunnable> ev = new DelayedFireDOMPaintEvent(
-            this, std::move(mTransactions[i].mInvalidations),
-            mTransactions[i].mTransactionId, aTimeStamp);
-        NS_DispatchToCurrentThreadQueue(ev.forget(),
-                                        EventQueuePriority::MediumHigh);
-        sent = true;
-        mTransactions.RemoveElementAt(i);
-        continue;
-      }
       i++;
     }
   }
@@ -2706,6 +2671,67 @@ void nsPresContext::ValidatePresShellAndDocumentReleation() const {
 nsRootPresContext::nsRootPresContext(dom::Document* aDocument,
                                      nsPresContextType aType)
     : nsPresContext(aDocument, aType) {}
+
+nsRootPresContext::~nsRootPresContext() {
+  NS_ASSERTION(mRegisteredPlugins.Count() == 0,
+               "All plugins should have been unregistered");
+  CancelAllDidPaintTimers();
+}
+
+/* virtual */
+void nsRootPresContext::Detach() {
+  CancelAllDidPaintTimers();
+  nsPresContext::Detach();
+}
+
+void
+nsRootPresContext::EnsureEventualDidPaintEvent(TransactionId aTransactionId)
+{
+  for (NotifyDidPaintTimer& t : mNotifyDidPaintTimers) {
+    if (t.mTransactionId == aTransactionId) {
+      return;
+    }
+  }
+
+  nsCOMPtr<nsITimer> timer;
+  RefPtr<nsRootPresContext> self = this;
+  nsresult rv = NS_NewTimerWithCallback(
+    getter_AddRefs(timer),
+    NewNamedTimerCallback([self, aTransactionId](){
+      nsAutoScriptBlocker blockScripts;
+      self->NotifyDidPaintForSubtree(aTransactionId);
+     }, "NotifyDidPaintForSubtree"), 100, nsITimer::TYPE_ONE_SHOT,
+    Document()->EventTargetFor(TaskCategory::Other));
+
+  if (NS_SUCCEEDED(rv)) {
+    NotifyDidPaintTimer* t = mNotifyDidPaintTimers.AppendElement();
+    t->mTransactionId = aTransactionId;
+    t->mTimer = timer;
+  }
+}
+
+void
+nsRootPresContext::CancelDidPaintTimers(TransactionId aTransactionId)
+{
+  uint32_t i = 0;
+  while (i < mNotifyDidPaintTimers.Length()) {
+    if (mNotifyDidPaintTimers[i].mTransactionId <= aTransactionId) {
+      mNotifyDidPaintTimers[i].mTimer->Cancel();
+      mNotifyDidPaintTimers.RemoveElementAt(i);
+    } else {
+      i++;
+    }
+  }
+}
+
+void
+nsRootPresContext::CancelAllDidPaintTimers()
+{
+  for (uint32_t i = 0; i < mNotifyDidPaintTimers.Length(); i++) {
+    mNotifyDidPaintTimers[i].mTimer->Cancel();
+  }
+  mNotifyDidPaintTimers.Clear();
+}
 
 void nsRootPresContext::AddWillPaintObserver(nsIRunnable* aRunnable) {
   if (!mWillPaintFallbackEvent.IsPending()) {

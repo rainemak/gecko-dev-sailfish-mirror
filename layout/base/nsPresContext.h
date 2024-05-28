@@ -356,6 +356,13 @@ class nsPresContext : public nsISupports, public mozilla::SupportsWeakPtr {
   nsDocShell* GetDocShell() const;
 
   /**
+   * Detach this pres context - i.e. cancel relevant timers,
+   * SetLinkHandler(null), etc.
+   * Only to be used by the DocumentViewer.
+   */
+  virtual void Detach() {}
+
+  /**
    * Get the visible area associated with this presentation context.
    * This is the size of the visible area that is used for
    * presenting the document. The returned value is in the standard
@@ -1372,7 +1379,27 @@ class nsPresContext : public nsISupports, public mozilla::SupportsWeakPtr {
 class nsRootPresContext final : public nsPresContext {
  public:
   nsRootPresContext(mozilla::dom::Document* aDocument, nsPresContextType aType);
+  virtual ~nsRootPresContext();
   virtual bool IsRoot() override { return true; }
+
+  virtual void Detach() override;
+
+  /**
+   * Ensure that NotifyDidPaintForSubtree is eventually called on this
+   * object after a timeout.
+   */
+  void EnsureEventualDidPaintEvent(TransactionId aTransactionId);
+
+  /**
+   * Cancels any pending eventual did paint timer for transaction
+   * ids up to and including aTransactionId.
+   */
+  void CancelDidPaintTimers(TransactionId aTransactionId);
+
+  /**
+   * Cancel all pending eventual did paint timers.
+   */
+  void CancelAllDidPaintTimers();
 
   /**
    * Add a runnable that will get called before the next paint. They will get
@@ -1407,6 +1434,12 @@ class nsRootPresContext final : public nsPresContext {
   };
 
   friend class nsPresContext;
+
+  struct NotifyDidPaintTimer {
+    TransactionId mTransactionId;
+    nsCOMPtr<nsITimer> mTimer;
+  };
+  AutoTArray<NotifyDidPaintTimer, 4> mNotifyDidPaintTimers;
 
   nsTArray<nsCOMPtr<nsIRunnable>> mWillPaintObservers;
   nsRevocableEventPtr<RunWillPaintObservers> mWillPaintFallbackEvent;

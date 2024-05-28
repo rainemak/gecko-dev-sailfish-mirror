@@ -1573,6 +1573,10 @@ static void DetachContainerRecurse(nsIDocShell* aShell) {
     if (Document* doc = viewer->GetDocument()) {
       doc->SetContainer(nullptr);
     }
+    RefPtr<nsPresContext> pc = viewer->GetPresContext();
+    if (pc) {
+      pc->Detach();
+    }
     if (PresShell* presShell = viewer->GetPresShell()) {
       auto weakShell = static_cast<nsDocShell*>(aShell);
       presShell->SetForwardingContainer(weakShell);
@@ -1713,6 +1717,9 @@ nsDocumentViewer::Destroy() {
 
     if (mDocument) {
       mDocument->SetContainer(nullptr);
+    }
+    if (mPresContext) {
+      mPresContext->Detach();
     }
     if (mPresShell) {
       mPresShell->SetForwardingContainer(mContainer);
@@ -3642,6 +3649,7 @@ void nsDocumentViewer::InvalidatePotentialSubDocDisplayItem() {
 
 void nsDocumentViewer::DestroyPresContext() {
   InvalidatePotentialSubDocDisplayItem();
+  mPresContext->Detach();
   mPresContext = nullptr;
 }
 
