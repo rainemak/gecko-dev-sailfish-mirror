@@ -44,6 +44,7 @@ UNIFIED_SOURCES += [
     "/third_party/libwebrtc/webrtc/media/engine/apm_helpers.cc",
     "/third_party/libwebrtc/webrtc/media/engine/constants.cc",
     "/third_party/libwebrtc/webrtc/media/engine/convert_legacy_video_factory.cc",
+    "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc",
     "/third_party/libwebrtc/webrtc/media/engine/internaldecoderfactory.cc",
     "/third_party/libwebrtc/webrtc/media/engine/internalencoderfactory.cc",
     "/third_party/libwebrtc/webrtc/media/engine/payload_type_mapper.cc",
@@ -67,10 +68,6 @@ if CONFIG["MOZ_DEBUG"] == "1":
 
     DEFINES["DYNAMIC_ANNOTATIONS_ENABLED"] = "1"
     DEFINES["WTF_USE_DYNAMIC_ANNOTATIONS"] = "1"
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
 
 if CONFIG["OS_TARGET"] == "Android":
 
@@ -202,55 +199,25 @@ if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Android":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
 
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
-
 if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Darwin":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
 
 if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "DragonFly":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
 
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
-
 if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "FreeBSD":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
 
 if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "NetBSD":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
 
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
-
 if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "OpenBSD":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
-
-if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "WINNT":
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
 
 if CONFIG["CPU_ARCH"] == "x86" and CONFIG["OS_TARGET"] == "Android":
 
@@ -303,10 +270,6 @@ if CONFIG["CPU_ARCH"] == "aarch64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TA
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
 
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/vp8_encoder_simulcast_proxy.cc"
-    ]
-
 if CONFIG["CPU_ARCH"] == "aarch64" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["USE_X11"] = "1"
@@ -315,50 +278,20 @@ if CONFIG["CPU_ARCH"] == "arm" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
 
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/vp8_encoder_simulcast_proxy.cc"
-    ]
-
 if CONFIG["CPU_ARCH"] == "arm" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["USE_X11"] = "1"
-
-if CONFIG["CPU_ARCH"] == "mips64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
-
-if CONFIG["CPU_ARCH"] == "ppc64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
 
 if CONFIG["CPU_ARCH"] == "x86" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["USE_X11"] = "1"
 
-if CONFIG["CPU_ARCH"] == "x86_64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
-
 if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
 
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/vp8_encoder_simulcast_proxy.cc"
-    ]
-
 if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86_64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["USE_X11"] = "1"
-
-    UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/media/engine/encoder_simulcast_proxy.cc"
-    ]
 
 Library("rtc_audio_video_gn")
