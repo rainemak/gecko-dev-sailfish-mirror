@@ -77,7 +77,6 @@ if CONFIG["OS_TARGET"] == "FreeBSD":
 if CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["USE_NSS_CERTS"] = "1"
-    DEFINES["USE_X11"] = "1"
     DEFINES["WEBRTC_LINUX"] = True
     DEFINES["WEBRTC_POSIX"] = True
     DEFINES["_FILE_OFFSET_BITS"] = "64"
@@ -138,6 +137,14 @@ if CONFIG["CPU_ARCH"] == "arm":
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/spl_sqrt_floor_arm.S"
     ]
 
+if CONFIG["CPU_ARCH"] == "mips64":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "ppc64":
+
+    DEFINES["USE_X11"] = "1"
+
 if not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Android":
 
     DEFINES["_FORTIFY_SOURCE"] = "2"
@@ -174,5 +181,37 @@ if CONFIG["CPU_ARCH"] == "aarch64" and CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["DISABLE_NACL"] = True
     DEFINES["NO_TCMALLOC"] = True
+
+if CONFIG["CPU_ARCH"] == "x86_64" and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "aarch64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "aarch64" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "arm" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "arm" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86_64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
 
 Library("common_audio_c_arm_asm_gn")

@@ -143,7 +143,6 @@ if CONFIG["OS_TARGET"] == "FreeBSD":
 if CONFIG["OS_TARGET"] == "Linux":
 
     DEFINES["USE_NSS_CERTS"] = "1"
-    DEFINES["USE_X11"] = "1"
     DEFINES["WEBRTC_LINUX"] = True
     DEFINES["WEBRTC_POSIX"] = True
     DEFINES["_FILE_OFFSET_BITS"] = "64"
@@ -218,6 +217,8 @@ if CONFIG["CPU_ARCH"] == "arm":
 
 if CONFIG["CPU_ARCH"] == "mips64":
 
+    DEFINES["USE_X11"] = "1"
+
     UNIFIED_SOURCES += [
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/complex_bit_reverse.c",
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/filter_ar_fast_q12.c",
@@ -225,6 +226,8 @@ if CONFIG["CPU_ARCH"] == "mips64":
     ]
 
 if CONFIG["CPU_ARCH"] == "ppc64":
+
+    DEFINES["USE_X11"] = "1"
 
     UNIFIED_SOURCES += [
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/complex_bit_reverse.c",
@@ -345,6 +348,8 @@ if CONFIG["CPU_ARCH"] == "x86" and CONFIG["OS_TARGET"] == "Linux":
 
 if CONFIG["CPU_ARCH"] == "x86_64" and CONFIG["OS_TARGET"] == "Linux":
 
+    DEFINES["USE_X11"] = "1"
+
     UNIFIED_SOURCES += [
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/complex_bit_reverse.c",
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/filter_ar_fast_q12.c",
@@ -406,5 +411,33 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CONFIG["OS_TARGET"] == "OpenBSD":
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/filter_ar_fast_q12.c",
         "/third_party/libwebrtc/webrtc/common_audio/signal_processing/spl_sqrt_floor.c"
     ]
+
+if CONFIG["CPU_ARCH"] == "aarch64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "aarch64" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "arm" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "arm" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["MOZ_DEBUG"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86_64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
 
 Library("common_audio_c_gn")

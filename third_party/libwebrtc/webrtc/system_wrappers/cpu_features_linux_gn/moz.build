@@ -11,7 +11,6 @@ AllowCompilerWarnings()
 
 DEFINES["CHROMIUM_BUILD"] = True
 DEFINES["USE_NSS_CERTS"] = "1"
-DEFINES["USE_X11"] = "1"
 DEFINES["V8_DEPRECATION_WARNINGS"] = True
 DEFINES["WEBRTC_ENABLE_PROTOBUF"] = "0"
 DEFINES["WEBRTC_LINUX"] = True
@@ -45,6 +44,7 @@ if not CONFIG["MOZ_DEBUG"]:
 if CONFIG["MOZ_DEBUG"] == "1":
 
     DEFINES["DYNAMIC_ANNOTATIONS_ENABLED"] = "1"
+    DEFINES["USE_X11"] = "1"
     DEFINES["WTF_USE_DYNAMIC_ANNOTATIONS"] = "1"
 
 if CONFIG["CPU_ARCH"] == "aarch64":
@@ -69,5 +69,33 @@ if CONFIG["CPU_ARCH"] == "x86":
     CFLAGS += [
         "-msse2"
     ]
+
+if CONFIG["CPU_ARCH"] == "aarch64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "arm" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "mips64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "ppc64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "x86_64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["_FORTIFY_SOURCE"] = "2"
+
+if CONFIG["CPU_ARCH"] == "x86" and CONFIG["HOST_CPU_ARCH"] == "x86_64" and not CONFIG["MOZ_DEBUG"] and CONFIG["OS_TARGET"] == "Linux":
+
+    DEFINES["USE_X11"] = "1"
 
 Library("cpu_features_linux_gn")
