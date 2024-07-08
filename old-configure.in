@@ -1873,6 +1873,16 @@ if test -n "$MOZ_WEBRTC"; then
     if test -n "$MOZ_X11"; then
       MOZ_WEBRTC_X11_LIBS="-lXext -lXdamage -lXfixes -lXcomposite"
     fi
+
+    MOZ_ENABLE_WEBRTC_GECKOCAMERA=
+    PKG_CHECK_MODULES(LIBGECKOCAMERA, geckocamera,
+                     MOZ_ENABLE_WEBRTC_GECKOCAMERA=1,
+                      MOZ_ENABLE_WEBRTC_GECKOCAMERA=)
+    if test "$MOZ_ENABLE_WEBRTC_GECKOCAMERA"; then
+       MOZ_ENABLE_WEBRTC_GECKOCAMERA=1
+       AC_DEFINE(MOZ_ENABLE_WEBRTC_GECKOCAMERA)
+       AC_SUBST(MOZ_ENABLE_WEBRTC_GECKOCAMERA)
+    fi
 fi
 
 AC_SUBST_LIST(MOZ_WEBRTC_X11_LIBS)

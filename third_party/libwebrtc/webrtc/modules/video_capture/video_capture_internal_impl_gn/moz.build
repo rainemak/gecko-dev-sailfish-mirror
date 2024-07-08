@@ -60,8 +60,8 @@ if CONFIG["OS_TARGET"] == "DragonFly":
     DEFINES["_FILE_OFFSET_BITS"] = "64"
 
     UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/modules/video_capture/linux/device_info_linux.cc",
-        "/third_party/libwebrtc/webrtc/modules/video_capture/linux/video_capture_linux.cc"
+        "/third_party/libwebrtc/webrtc/modules/video_capture/sfos/device_info_sfos.cc",
+        "/third_party/libwebrtc/webrtc/modules/video_capture/sfos/video_capture_sfos.cc"
     ]
 
 if CONFIG["OS_TARGET"] == "FreeBSD":
@@ -87,10 +87,19 @@ if CONFIG["OS_TARGET"] == "Linux":
         "rt"
     ]
 
+    LOCAL_INCLUDES += [ "/media/libyuv/libyuv/include/" ]
+    OS_LIBS += CONFIG["LIBGECKOCAMERA_LIBS"]
+
     UNIFIED_SOURCES += [
-        "/third_party/libwebrtc/webrtc/modules/video_capture/linux/device_info_linux.cc",
-        "/third_party/libwebrtc/webrtc/modules/video_capture/linux/video_capture_linux.cc"
+        "/third_party/libwebrtc/webrtc/modules/video_capture/sfos/device_info_sfos.cc",
+        "/third_party/libwebrtc/webrtc/modules/video_capture/sfos/video_capture_sfos.cc"
     ]
+
+    CXXFLAGS += CONFIG["LIBGECKOCAMERA_CFLAGS"]
+
+    # Make Hal.h buildable
+    CXXFLAGS += CONFIG["NSPR_CFLAGS"]
+    CXXFLAGS += CONFIG["MOZ_PIXMAN_CFLAGS"]
 
 if CONFIG["OS_TARGET"] == "NetBSD":
 
