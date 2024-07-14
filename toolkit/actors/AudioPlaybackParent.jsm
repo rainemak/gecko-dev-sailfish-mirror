@@ -14,6 +14,9 @@ class AudioPlaybackParent extends JSWindowActorParent {
   }
   receiveMessage(aMessage) {
     const browser = this.browsingContext.top.embedderElement;
+    if (!browser) {
+      return;
+    }
     switch (aMessage.name) {
       case "AudioPlayback:Start":
         this._hasAudioPlayback = true;
