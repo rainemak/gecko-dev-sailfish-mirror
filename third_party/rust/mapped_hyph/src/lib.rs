@@ -475,7 +475,9 @@ impl Hyphenator<'_> {
     /// hyphenation dictionary, this function may panic with an overflow or
     /// array bounds violation.
     pub fn find_hyphen_values(&self, word: &str, values: &mut [u8]) -> isize {
-        assert!(values.len() >= word.len());
+        if (values.len() < word.len()) {
+            return 0;
+        }
         values.iter_mut().for_each(|x| *x = 0);
         let top_level = self.level(0);
         let (lh_min, rh_min, clh_min, crh_min) = top_level.word_boundary_mins();
