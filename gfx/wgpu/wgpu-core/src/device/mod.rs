@@ -1782,25 +1782,7 @@ impl<B: GfxBackend> Device<B> {
                 .allocate(&self.raw, &layout.raw, &layout.desc_count, 1)?;
         desc_set = desc_sets.pop().unwrap();
 
-        // Set the descriptor set's label for easier debugging.
-        if let Some(label) = desc.label.as_ref() {
-            unsafe {
-                self.raw.set_descriptor_set_name(desc_set.raw_mut(), &label);
-            }
-        }
-
-        if let Some(start_binding) = write_map.keys().next().cloned() {
-            let descriptors = write_map.into_iter().flat_map(|(_, list)| list);
-            unsafe {
-                let write = hal::pso::DescriptorSetWrite {
-                    set: desc_set.raw_mut(),
-                    binding: start_binding,
-                    array_offset: 0,
-                    descriptors,
-                };
-                self.raw.write_descriptor_set(write);
-            }
-        }
+        println!("cargo:gfx:wgpu:wgpu-core:src:device:mod.rs");
 
         Ok(binding_model::BindGroup {
             raw: desc_set,
