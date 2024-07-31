@@ -90,6 +90,7 @@ NS_IMETHODIMP nsLookAndFeel::Observer::Observe(nsISupports*, const char* aTopic,
     if (mDarkAmbience != darkAmbience) {
         mDarkAmbience = darkAmbience;
         MOZ_LOG(sLookAndFeel, LogLevel::Info, ("Ambience set to %s", mDarkAmbience ? "dark" : "light"));
+        Refresh();
         if (nsCOMPtr<nsIObserverService> obs = services::GetObserverService()) {
             NotifyChangedAllWindows(widget::ThemeChangeKind::StyleAndLayout);
         }

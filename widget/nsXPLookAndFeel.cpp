@@ -759,8 +759,10 @@ nsresult nsXPLookAndFeel::GetIntValue(IntID aID, int32_t& aResult) {
   }
 
   if (NS_SUCCEEDED(Preferences::GetInt(sIntPrefs[size_t(aID)], &aResult))) {
-    sIntCache.Insert(aID, Some(aResult));
-    return NS_OK;
+    if ((aID != IntID::SystemUsesDarkTheme) || (aResult != 2)) {
+      sIntCache.Insert(aID, Some(aResult));
+      return NS_OK;
+    }
   }
 
   if (NS_FAILED(NativeGetInt(aID, aResult))) {
