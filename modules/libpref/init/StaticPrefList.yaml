@@ -4014,7 +4014,7 @@
 
 -   name: embedlite.azpc.json.doubletap
     type: bool
-    value: false
+    value: true
     mirror: always
 
 -   name: embedlite.azpc.json.longtap
