@@ -12,10 +12,6 @@ namespace mozilla {
 bool GeckoCameraDecoderModule::sInitialized = false;
 gecko::codec::CodecManager* GeckoCameraDecoderModule::sCodecManager = nullptr;
 
-GeckoCameraDecoderModule::GeckoCameraDecoderModule() {}
-
-GeckoCameraDecoderModule::~GeckoCameraDecoderModule() {}
-
 void GeckoCameraDecoderModule::Init() {
   if (sInitialized) {
     return;
@@ -52,6 +48,11 @@ bool GeckoCameraDecoderModule::SupportsMimeType(
   return (sInitialized && sCodecManager
           && sCodecManager->videoDecoderAvailable(
             GeckoCameraVideoDecoder::CodecTypeFromMime(aMimeType)));
+}
+
+/* static */
+already_AddRefed<PlatformDecoderModule> GeckoCameraDecoderModule::Create() {
+  return MakeAndAddRef<GeckoCameraDecoderModule>();
 }
 
 }  // namespace mozilla

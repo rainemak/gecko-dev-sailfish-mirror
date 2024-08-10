@@ -17,9 +17,11 @@
 namespace mozilla {
 
 class GeckoCameraDecoderModule : public PlatformDecoderModule {
+  template <typename T, typename... Args>
+  friend already_AddRefed<T> MakeAndAddRef(Args&&...);
+
  public:
-  GeckoCameraDecoderModule();
-  virtual ~GeckoCameraDecoderModule();
+  static already_AddRefed<PlatformDecoderModule> Create();
 
   nsresult Startup() override;
 
@@ -35,6 +37,9 @@ class GeckoCameraDecoderModule : public PlatformDecoderModule {
   static void Init();
 
  private:
+  GeckoCameraDecoderModule() = default;
+  virtual ~GeckoCameraDecoderModule() = default;
+
   static bool sInitialized;
   static gecko::codec::CodecManager* sCodecManager;
 };

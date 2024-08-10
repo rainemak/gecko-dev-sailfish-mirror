@@ -28,7 +28,8 @@ GeckoCameraVideoDecoder::GeckoCameraVideoDecoder(
       mImageContainer(aParams.mImageContainer),
       mImageAllocator(aParams.mKnowsCompositor),
       mMutex("GeckoCameraVideoDecoder::mMutex"),
-      mTaskQueue(aParams.mTaskQueue),
+      mTaskQueue(new TaskQueue(
+          GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER), "GeckoCameraVideoDecoder")),
       mIsH264(MP4Decoder::IsH264(aParams.mConfig.mMimeType)),
       mMaxRefFrames(mIsH264 ? H264::HasSPS(aParams.VideoConfig().mExtraData)
                                   ? H264::ComputeMaxRefFrames(
@@ -158,21 +159,18 @@ void GeckoCameraVideoDecoder::onDecodedYCbCrFrame(const gecko::camera::YCbCrFram
   buffer.mPlanes[0].mStride = frame->yStride;
   buffer.mPlanes[0].mWidth = frame->width;
   buffer.mPlanes[0].mHeight = frame->height;
-  buffer.mPlanes[0].mOffset = 0;
   buffer.mPlanes[0].mSkip = 0;
   // Cb plane.
   buffer.mPlanes[1].mData = const_cast<uint8_t*>(frame->cb);
   buffer.mPlanes[1].mStride = frame->cStride;
   buffer.mPlanes[1].mWidth = (frame->width + 1) / 2;
   buffer.mPlanes[1].mHeight = (frame->height + 1) / 2;
-  buffer.mPlanes[1].mOffset = 0;
   buffer.mPlanes[1].mSkip = frame->chromaStep - 1;
   // Cr plane.
   buffer.mPlanes[2].mData = const_cast<uint8_t*>(frame->cr);
   buffer.mPlanes[2].mStride = frame->cStride;
   buffer.mPlanes[2].mWidth = (frame->width + 1) / 2;
   buffer.mPlanes[2].mHeight = (frame->height + 1) / 2;
-  buffer.mPlanes[2].mOffset = 0;
   buffer.mPlanes[2].mSkip = frame->chromaStep - 1;
 
   gfx::IntRect pictureRegion(0, 0, frame->width, frame->height);
@@ -187,7 +185,7 @@ void GeckoCameraVideoDecoder::onDecodedYCbCrFrame(const gecko::camera::YCbCrFram
   }
 
   MutexAutoLock lock(mMutex);
-  mReorderQueue.Push(data);
+  mReorderQueue.Push(std::move(data));
 }
 
 void GeckoCameraVideoDecoder::onDecodedGraphicBuffer(std::shared_ptr<gecko::camera::GraphicBuffer> buffer)

@@ -45,7 +45,7 @@ class GeckoCameraVideoDecoder
   }
 
   nsCString GetDescriptionName() const override {
-    return NS_LITERAL_CSTRING("gecko-camera video decoder");
+    return "gecko-camera video decoder"_ns;
   }
 
   bool SupportDecoderRecycling() const override {

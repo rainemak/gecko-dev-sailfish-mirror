@@ -603,7 +603,7 @@ void PDMFactory::CreateDefaultPDMs() {
 #endif
 #ifdef MOZ_EMBEDLITE
   if (StaticPrefs::media_gecko_camera_codec_enabled()) {
-    StartupPDM(GeckoCameraDecoderModule(),
+    StartupPDM(GeckoCameraDecoderModule::Create(),
                StaticPrefs::media_gecko_camera_codec_preferred());
   }
 #endif
