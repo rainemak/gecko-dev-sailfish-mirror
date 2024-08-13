@@ -340,9 +340,9 @@ Maybe<SymbolLoader> GLLibraryEGL::GetSymbolLoader() const {
 // -
 
 /* static */
-RefPtr<GLLibraryEGL> GLLibraryEGL::Create(nsACString* const out_failureId) {
+RefPtr<GLLibraryEGL> GLLibraryEGL::Create(nsACString* const out_failureId, void* aDisplay) {
   RefPtr<GLLibraryEGL> ret = new GLLibraryEGL;
-  if (!ret->Init(false, out_failureId)) {
+  if (!ret->Init(false, out_failureId, aDisplay)) {
     return nullptr;
   }
   return ret;

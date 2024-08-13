@@ -995,23 +995,24 @@ static bool CreateConfigScreen(EglDisplay& egl, EGLConfig* const aConfig,
   return false;
 }
 
+static StaticMutex sMutex;
+static StaticRefPtr<GLLibraryEGL> gDefaultEglLibrary;
+
 already_AddRefed<GLContext> GLContextProviderEGL::CreateWrappingExisting(
     void* aContext, void* aSurface, void* aDisplay) {
   if (!aContext || !aSurface) return nullptr;
 
   nsCString failureId;
-  const RefPtr<GLLibraryEGL> lib = new GLLibraryEGL;
-  if (!lib) {
-    gfxCriticalNote << "Failed[3] to load EGL library";
-    return nullptr;
+
+  if (!gDefaultEglLibrary) {
+    gDefaultEglLibrary = GLLibraryEGL::Create(&failureId, aDisplay);
+
+    if (!gDefaultEglLibrary) {
+      gfxCriticalNote << "Failed[3] to load EGL library";
+      return nullptr;
+    }
   }
-  bool result = lib.operator->()->Init(false, &failureId, aDisplay);
-  if (!result) {
-    gfxCriticalNote << "Failed[3] initialise display: "
-                      << failureId.get();
-    return nullptr;
-  }
-  const std::shared_ptr<EglDisplay> egl = lib.operator->()->DefaultDisplay(&failureId);
+  const std::shared_ptr<EglDisplay> egl = gDefaultEglLibrary.operator->()->DefaultDisplay(&failureId);
 
   if (!egl) {
     gfxCriticalNote << "Failed[3] to create EGL library  display: "
@@ -1298,13 +1299,10 @@ GLContext* GLContextProviderEGL::GetGlobalContext() { return nullptr; }
 
 // -
 
-static StaticMutex sMutex;
-static StaticRefPtr<GLLibraryEGL> gDefaultEglLibrary;
-
 RefPtr<GLLibraryEGL> DefaultEglLibrary(nsACString* const out_failureId) {
   StaticMutexAutoLock lock(sMutex);
   if (!gDefaultEglLibrary) {
-    gDefaultEglLibrary = GLLibraryEGL::Create(out_failureId);
+    gDefaultEglLibrary = GLLibraryEGL::Create(out_failureId, EGL_NO_DISPLAY);
     if (!gDefaultEglLibrary) {
       NS_WARNING("GLLibraryEGL::Create failed");
     }

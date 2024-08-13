@@ -125,7 +125,7 @@ class GLLibraryEGL final {
   std::unordered_map<EGLDisplay, std::weak_ptr<EglDisplay>> mActiveDisplays;
 
  public:
-  static RefPtr<GLLibraryEGL> Create(nsACString* const out_failureId);
+  static RefPtr<GLLibraryEGL> Create(nsACString* const out_failureIdvoid, void* aDisplay);
   bool Init(bool forceAccel, nsACString* const out_failureId, EGLDisplay aDisplay = EGL_NO_DISPLAY);
 
  private:
