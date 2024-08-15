@@ -173,6 +173,10 @@ void GeckoCameraVideoDecoder::onDecodedYCbCrFrame(const gecko::camera::YCbCrFram
   buffer.mPlanes[2].mHeight = (frame->height + 1) / 2;
   buffer.mPlanes[2].mSkip = frame->chromaStep - 1;
 
+  buffer.mYUVColorSpace = DefaultColorSpace({frame->width, frame->height});
+  buffer.mColorDepth = gfx::ColorDepth::COLOR_8;
+  buffer.mColorRange = gfx::ColorRange::LIMITED;
+
   gfx::IntRect pictureRegion(0, 0, frame->width, frame->height);
   RefPtr<MediaData> data = VideoData::CreateAndCopyData(
       mInfo, mImageContainer, inputFrame->mOffset,
