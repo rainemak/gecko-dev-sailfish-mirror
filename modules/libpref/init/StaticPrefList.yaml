@@ -5067,7 +5067,7 @@
 # channels.
 - name: gfx.webrender.force-disabled
   type: bool
-  value: false
+  value: true
   mirror: once
 
 #ifdef MOZ_WIDGET_GTK
